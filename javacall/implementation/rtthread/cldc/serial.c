@@ -199,7 +199,7 @@ javacall_serial_open_start(const char *devName, int baudRate, unsigned int optio
 {
     char* pName;
     if (!strcmp(devName, "COM0")) {
-        pName = "uart3";
+        pName = "uart4";
     } else if (!strcmp(devName, "COM1")) {
         pName = "uart1";
     } else if (!strcmp(devName, "COM2")) {

@@ -28,7 +28,7 @@
  * cast to void *.  Since winsock reads and writes to sockets are synchronous,
  * the context for reading and writing is always set to NULL.
  */
-
+#if 0
 #include "javacall_network.h"
 #include "javacall_socket.h"
 #include "javacall_datagram.h"
@@ -1190,4 +1190,4 @@ char* javacall_inet_ntoa(javacall_ip_version ip_version, void *address) {
     //javacall_printf("javacall_inet_ntoa: trace\n");
 	return inet_ntoa(*((struct in_addr*)address));
 }
-
+#endif

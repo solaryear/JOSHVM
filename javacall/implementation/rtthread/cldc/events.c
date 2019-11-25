@@ -290,7 +290,6 @@ javacall_result javacall_events_finalize(void){
 	MUTEX_LOCK;
 	eventqueue_destroy();
 	rt_mb_detach(&mb);
-	rt_mb_delete(&mb);
 	g_event_init = 0;
 	MUTEX_UNLOCK;
 	

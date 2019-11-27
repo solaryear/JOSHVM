@@ -1,0 +1,3 @@
+[submodule "jams"]
+	path = jams
+	url = https://github.com/ruitaomu/TH_JAMS.git

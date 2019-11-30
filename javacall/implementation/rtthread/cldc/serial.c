@@ -344,7 +344,6 @@ javacall_serial_open_start(const char *devName, int baudRate, unsigned int optio
 
     if (isCOM0) {
         device_com0 = device;
-        com0_ref++;
     }
 
     serial_configure(device, baudRate, options);

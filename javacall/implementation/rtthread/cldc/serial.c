@@ -33,9 +33,8 @@ static int err_count = 0;
 
 static rt_thread_t serial_tid = RT_NULL;
 static struct rt_mailbox jc_serial_mb;
-static char jc_serial_mb_pool[4000];
+static char jc_serial_mb_pool[128];
 
-static int com0_ref = 0;
 
 #define JC_SERIAL_HANDLE_MIN 2000
 #define SERIAL_HANDLE_COUNT 8
@@ -130,13 +129,13 @@ static void sendSerialEvent(rt_device_t dev) {
         // already set
         return;
     }
-    if (serial_tid != NULL) {
+    if (serial_tid != RT_NULL) {
         rt_mb_send(&jc_serial_mb, (rt_uint32_t)dev);
     }
 }
 
 static void init_wait_thread() {
-    if (serial_tid != NULL) {
+    if (serial_tid != RT_NULL) {
         return;
     }
 
@@ -340,7 +339,6 @@ javacall_serial_open_start(const char *devName, int baudRate, unsigned int optio
         // has opened
         if (isCOM0) {
             serial_configure(device, baudRate, options);
-            com0_ref++;
             *hPort = vm_handle;
             return JAVACALL_OK;
         } else {
@@ -396,11 +394,7 @@ javacall_serial_close_start(javacall_handle hPort, void **pContext)
         return JAVACALL_FAIL;
     }
     if (device == device_com0) {
-        if (--com0_ref > 0) {
-            return JAVACALL_OK;
-        } else {
-            com0_configured = 0;
-        }
+        return JAVACALL_OK;
     }
     rt_device_close(device);
     serial_remove_handle(device);

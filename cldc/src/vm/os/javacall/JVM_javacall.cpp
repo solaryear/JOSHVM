@@ -289,7 +289,7 @@ end:
 // 	"com.sun.cldchi.test.HelloWorld"
 // #endif
 
-#define JAVACALL_JAVATASK_STARTUP_PARAM "=HeapMin110000", "=HeapCapacity110000", "-int", \
+#define JAVACALL_JAVATASK_STARTUP_PARAM "=HeapMin120000", "=HeapCapacity120000", "-int", \
    "org.joshvm.ams.jams.Jams"
 #endif
 

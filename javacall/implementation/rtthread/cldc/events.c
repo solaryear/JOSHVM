@@ -75,7 +75,16 @@ void eventqueue_enqueue(unsigned char* data, int dataLen){
 	//javacall_printf("eventqueue_enqueue\n");
 
 	EventMessage *e = (EventMessage *)rt_malloc(sizeof(EventMessage));
+	if (e == NULL) {
+		javacall_logging_printf(JAVACALL_LOGGING_WARNING, JC_EVENTS, "Event queue failed for no memory\n");
+		return;
+	}
 	e->data = rt_malloc(dataLen);
+	if (e->data == NULL) {
+		javacall_logging_printf(JAVACALL_LOGGING_WARNING, JC_EVENTS, "Event queue failed for no memory\n");
+		rt_free(e);
+		return;
+	}
 	e->dataLen = dataLen;
 	e->next = NULL;
 	rt_memcpy(e->data, data, dataLen);
@@ -144,7 +153,12 @@ int check_for_events(int miliseconds){
 void gen_event(){
 	//javacall_printf("gen_event\n");
 
-	rt_mb_send(&mb, 0);
+	rt_err_t result = rt_mb_send(&mb, 0);
+	if (result == RT_EOK) {
+		return;
+	} else {
+		javacall_logging_printf(JAVACALL_LOGGING_WARNING, JC_EVENTS, "Event mailbox full\n");
+	}
 }
 
     
@@ -177,7 +191,7 @@ javacall_result javacall_event_receive(
                             /*IN*/  int             binaryBufferMaxLen,
                             /*OUT*/ int*            outEventLen){
 
-	//javacall_printf("javacall_event_receive\n");
+	
 	
 	int event = 0;
 	
@@ -188,6 +202,13 @@ javacall_result javacall_event_receive(
 	if (binaryBuffer == NULL || binaryBufferMaxLen <= 0){
 		//javacall_printf("javacall_event_receive, binaryBuffer is NULL or binaryBufferMaxLen <= 0\n");
 		return JAVACALL_FAIL;
+	}
+
+	*outEventLen = eventqueue_dequeue(binaryBuffer, binaryBufferMaxLen);
+	if (*outEventLen > 0) {
+		return JAVACALL_OK;
+	} else if (*outEventLen == -1) {
+		return JAVACALL_OUT_OF_MEMORY;
 	}
 
 	event = check_for_events(timeTowaitInMillisec);
@@ -219,8 +240,7 @@ javacall_result javacall_event_receive(
 javacall_result javacall_event_send(unsigned char* binaryBuffer,
                                     int binaryBufferLen){
 
-	//javacall_printf("javacall_event_send\n");
-
+	
 	if (!g_event_init){
 		javacall_events_init();
 	}

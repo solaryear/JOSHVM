@@ -176,7 +176,6 @@ javacall_result javacall_directui_textout(int font, int color, int x, int y,
 		}
 		refresh_param.zone_info.col_start = refresh_param.zone_info.col_end;
 	}
-	javacall_printf("\n");
 	
 	return JAVACALL_OK;
 }

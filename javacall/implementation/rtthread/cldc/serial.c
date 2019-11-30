@@ -330,10 +330,6 @@ javacall_serial_open_start(const char *devName, int baudRate, unsigned int optio
         return JAVACALL_FAIL;
     }
 
-    if (isCOM0) {
-        device_com0 = device;
-    }
-
     int vm_handle = serial_get_handle(device);
     if (vm_handle > 0) {
         // has opened
@@ -344,6 +340,11 @@ javacall_serial_open_start(const char *devName, int baudRate, unsigned int optio
         } else {
             return JAVACALL_FAIL;
         }
+    }
+
+    if (isCOM0) {
+        device_com0 = device;
+        com0_ref++;
     }
 
     serial_configure(device, baudRate, options);

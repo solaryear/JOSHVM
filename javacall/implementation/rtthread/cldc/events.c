@@ -102,7 +102,7 @@ void eventqueue_enqueue(unsigned char* data, int dataLen){
 int eventqueue_dequeue(unsigned char* data, int dataLen){
 	//javacall_printf("eventqueue_dequeue\n");
 
-	EventMessage* e;
+	EventMessage* h;
 	int len, ret;
 	
 	if (g_eventqueue_head == NULL){
@@ -116,16 +116,15 @@ int eventqueue_dequeue(unsigned char* data, int dataLen){
 	}
 	
 	rt_memcpy(data, g_eventqueue_head->data, len);
-	e = g_eventqueue_head->next;
-	rt_free(g_eventqueue_head->data);
-	rt_free(g_eventqueue_head);
-	g_eventqueue_head = e;
 	MUTEX_LOCK;
-	if (g_eventqueue_head==0) {
+	h = g_eventqueue_head;
+	g_eventqueue_head = g_eventqueue_head->next;
+	if (g_eventqueue_head == NULL) {
 		g_eventqueue_tail = 0;
 	}
 	MUTEX_UNLOCK;
-
+	rt_free(h->data);
+	rt_free(h);
 	return ret;
 
 }

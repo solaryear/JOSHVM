@@ -97,8 +97,7 @@ javacall_result javacall_directui_init(void) {
 	
 	fd = open("/dev/LCD", RT_DEVICE_OFLAG_OPEN);
     if(fd >= 0){
-        if(ioctl(fd, LCD_CTRL_INIT_DEV, RT_NULL) == 0)
-            rt_kprintf("LCD mode config finish.\n");
+        ioctl(fd, LCD_CTRL_INIT_DEV, RT_NULL);
 	}
     return JAVACALL_OK;
 }
@@ -125,7 +124,7 @@ void javacall_directui_clear(int rgb) {
 	set_param.value = 0x0;
 
 	if(ioctl(fd, LCD_CTRL_SET_SECTION, &set_param) == 0) {
-            rt_kprintf("LCD display cls.\n");
+            //rt_kprintf("LCD display cls.\n");
 	}
 }
 

@@ -34,7 +34,7 @@ typedef struct EventMessage_ {
     int dataLen;
 }EventMessage;
 
-EventMessage *g_eventqueue_head, *g_eventqueue_tail;
+volatile EventMessage *g_eventqueue_head, *g_eventqueue_tail;
 int g_event_init = 0;
 static int lastError;
 
@@ -89,12 +89,14 @@ void eventqueue_enqueue(unsigned char* data, int dataLen){
 	e->next = NULL;
 	rt_memcpy(e->data, data, dataLen);
 
+	MUTEX_LOCK;
 	if (g_eventqueue_tail){
 		g_eventqueue_tail->next = e;
 	}else{
 		g_eventqueue_head = e;		
 	}
 	g_eventqueue_tail = e;
+	MUTEX_UNLOCK;
 }
 
 int eventqueue_dequeue(unsigned char* data, int dataLen){
@@ -118,8 +120,11 @@ int eventqueue_dequeue(unsigned char* data, int dataLen){
 	rt_free(g_eventqueue_head->data);
 	rt_free(g_eventqueue_head);
 	g_eventqueue_head = e;
-	if (g_eventqueue_head==0)
+	MUTEX_LOCK;
+	if (g_eventqueue_head==0) {
 		g_eventqueue_tail = 0;
+	}
+	MUTEX_UNLOCK;
 
 	return ret;
 
@@ -204,13 +209,6 @@ javacall_result javacall_event_receive(
 		return JAVACALL_FAIL;
 	}
 
-	*outEventLen = eventqueue_dequeue(binaryBuffer, binaryBufferMaxLen);
-	if (*outEventLen > 0) {
-		return JAVACALL_OK;
-	} else if (*outEventLen == -1) {
-		return JAVACALL_OUT_OF_MEMORY;
-	}
-
 	event = check_for_events(timeTowaitInMillisec);
 	if (event==0){
 		//javacall_printf("javacall_event_receive: event not found\n");
@@ -250,11 +248,9 @@ javacall_result javacall_event_send(unsigned char* binaryBuffer,
 		return JAVACALL_FAIL;
 	}
 
-	MUTEX_LOCK;
 	eventqueue_enqueue(binaryBuffer, binaryBufferLen);
 	gen_event();
-	MUTEX_UNLOCK;
-
+	
 	return JAVACALL_OK;
 
 	

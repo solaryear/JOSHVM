@@ -61,8 +61,8 @@ javacall_result javacall_time_finalize_timer(javacall_handle handle) {
  *         format of GMT+/-??:??. For example, GMT-08:00 for PST.
  */
 char* javacall_time_get_local_timezone(void){
-	static char tzstring[128];
-	snprintf(tzstring, 128, "GMT+%02d:%02d",8,0);
+	static char tzstring[16];
+	snprintf(tzstring, 16, "GMT+%02d:%02d",8,0);
 	return tzstring;
 }
 

@@ -374,6 +374,18 @@ javacall_result  /*OPTIONAL*/ javacall_serial_open_finish(const char *devName, i
     return JAVACALL_FAIL;
 }
 
+static javacall_result close_common(javacall_handle hPort) {
+	rt_device_t device = (rt_device_t)serial_get_native_handle(hPort);
+	if (device == 0) {
+		return JAVACALL_FAIL;
+	}
+	if (device == device_com0) {
+		return JAVACALL_OK;
+	}
+	rt_device_close(device);
+	serial_remove_handle(device);
+	return JAVACALL_OK;
+}
 /**
  * Initiates closing serial link
  *
@@ -389,16 +401,7 @@ javacall_result  /*OPTIONAL*/ javacall_serial_open_finish(const char *devName, i
 javacall_result /*OPTIONAL*/
 javacall_serial_close_start(javacall_handle hPort, void **pContext)
 {
-    rt_device_t device = (rt_device_t)serial_get_native_handle(hPort);
-    if (device == 0) {
-        return JAVACALL_FAIL;
-    }
-    if (device == device_com0) {
-        return JAVACALL_OK;
-    }
-    rt_device_close(device);
-    serial_remove_handle(device);
-    return JAVACALL_OK;
+	return close_common(hPort);
 }
 
 /**
@@ -413,7 +416,7 @@ javacall_serial_close_start(javacall_handle hPort, void **pContext)
 javacall_result /*OPTIONAL*/
 javacall_serial_close_finish(javacall_handle hPort, void *context)
 {
-    return JAVACALL_OK;
+    return close_common(hPort);
 }
 
 /**

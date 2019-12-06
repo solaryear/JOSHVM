@@ -27,7 +27,7 @@
 # include "incls/_precompiled.incl"
 # include "incls/_Disassembler_thumb2.cpp.incl"
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 const char* Disassembler::_eol_comments;
 #if ENABLE_COMPILER
 const char* Disassembler::_unresolved_label_name;

@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 class Disassembler: public StackObj {
 #if ENABLE_COMPILER

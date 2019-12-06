@@ -29,7 +29,7 @@
 
 #if ENABLE_COMPILER
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 
 void CompiledMethod::print_code_on(Stream* st) {

@@ -23,11 +23,17 @@
 #include <rtthread.h>
 #include <drivers/pin.h>
 
-#define BUFFLEN	 256
-#define PINS_MAX 50
+#define PINS_MAX 100
+#define INVALID_FD (-1)
+
+static int gpio_dev_fd = INVALID_FD;
 
 void javacall_gpio_init(void) {
-	
+	gpio_dev_fd = open("/dev/pin", RT_DEVICE_OFLAG_OPEN);
+	if (gpio_dev_fd < 0) {
+		rt_kprintf("javacall_gpio_init failed!\n");
+		gpio_dev_fd = INVALID_FD;
+	}
 }
 
 void javacall_gpio_deinit(void) {
@@ -52,6 +58,11 @@ javacall_dio_result javacall_gpio_pin_open(const javacall_int32 port,
 		return JAVACALL_DIO_UNSUPPORTED_ACCESS_MODE;
 	}
 
+	if (gpio_dev_fd == INVALID_FD) {
+		rt_kprintf("rt_pin: open device error\n");
+		return JAVACALL_DIO_FAIL;
+	}
+
 	rt_base_t pinMode = PIN_MODE_OUTPUT;
 	if (direction == JAVACALL_GPIO_INPUT_MODE) {
 		pinMode = PIN_MODE_INPUT;
@@ -66,45 +77,69 @@ javacall_dio_result javacall_gpio_pin_open(const javacall_int32 port,
 			pinMode = PIN_MODE_OUTPUT_OD;
 		}
 	}
-	rt_pin_mode(pin, pinMode);
+
+	struct rt_device_pin_mode beepmode;
+	beepmode.pin = pin;
+	beepmode.mode = pinMode;
+
+	rt_kprintf("javacall_gpio_pin_open: pin %d, mode %d\n", beepmode.pin, beepmode.mode);
+	
+	if(ioctl(gpio_dev_fd, 0, &beepmode) != 0) {
+		rt_kprintf("rt_pin:ioctl set mode error\n");
+		return JAVACALL_DIO_FAIL;
+	}
 
 	if (trigger != JAVACALL_TRIGGER_NONE) {
-		rt_uint32_t irqMode = PIN_IRQ_MODE_RISING;
-		if (trigger == JAVACALL_TRIGGER_FALLING_EDGE) {
-			irqMode = PIN_IRQ_MODE_FALLING;
-		} else if (trigger == JAVACALL_TRIGGER_BOTH_EDGES) {
-			irqMode = PIN_IRQ_MODE_RISING_FALLING;
-		} else if (trigger == JAVACALL_TRIGGER_HIGH_LEVEL) {
-			irqMode = PIN_IRQ_MODE_HIGH_LEVEL;
-		} else if(trigger == JAVACALL_TRIGGER_LOW_LEVEL) {
-			irqMode = PIN_IRQ_MODE_LOW_LEVEL;
-		}
-		rt_pin_attach_irq(pin, irqMode, hdr_callback, (void*)pin);
-		rt_pin_irq_enable(pin, PIN_IRQ_ENABLE);
+		rt_kprintf("rt_pin: Unsupported TRIGGER Mode");
+		return JAVACALL_FAIL;
 	}
+	rt_kprintf("javacall_gpio_pin_open returns pin=%d\n", pin);
 	*pHandle = pin;
 	return JAVACALL_DIO_OK;
 }
 
 javacall_dio_result javacall_gpio_pin_close(javacall_handle handle) {
-	rt_pin_irq_enable((int)handle, PIN_IRQ_DISABLE);
-	rt_pin_detach_irq((int)handle);
+	if (gpio_dev_fd == INVALID_FD) {
+		close(gpio_dev_fd);
+	}	
 	return JAVACALL_DIO_OK;
 }
 
 javacall_dio_result javacall_gpio_pin_write(const javacall_handle handle, 
         const javacall_bool val)
 {
-	rt_pin_write(handle, val==JAVACALL_TRUE?PIN_HIGH:PIN_LOW);
-	return JAVACALL_DIO_OK;
+	struct rt_device_pin_status tempstatus;
+	if (gpio_dev_fd == INVALID_FD) {
+		return JAVACALL_DIO_FAIL;
+	}
+	tempstatus.status = val?PIN_HIGH:PIN_LOW;
+	tempstatus.pin = handle;
+
+	
+	rt_kprintf("javacall_gpio_pin_write: rd=%d\n", handle);
+
+	if(write(gpio_dev_fd, &tempstatus, sizeof(tempstatus)) == sizeof(tempstatus)) {
+		return JAVACALL_DIO_OK;
+	} else {
+		return JAVACALL_DIO_FAIL;
+	}
 }
 
 javacall_dio_result javacall_gpio_pin_read(const javacall_handle handle,
         /*OUT*/javacall_bool* pVal)
 {
-	*pVal = rt_pin_read(handle);
-	//javacall_printf("rt_pin_read(%d)->%d\n",handle,*pVal);
-	return JAVACALL_DIO_OK;
+	struct rt_device_pin_status tempstatus;
+
+	if (gpio_dev_fd == INVALID_FD) {
+		return JAVACALL_DIO_FAIL;
+	}
+	tempstatus.pin = handle;
+
+	if(read(gpio_dev_fd, &tempstatus, sizeof(tempstatus)) == sizeof(tempstatus)) {
+		*pVal = tempstatus.status;
+		return JAVACALL_DIO_OK;
+	}
+	return JAVACALL_DIO_FAIL;
 }
 
 javacall_dio_result javacall_gpio_pin_notification_start(const javacall_handle handle)

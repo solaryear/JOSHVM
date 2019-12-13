@@ -43,6 +43,7 @@ static int fd = -1;
 #define LCD_CTRL_UPDATE_SECTION			6
 #define LCD_CTRL_FLUSH					7
 #define LCD_CTRL_CLEAR_SECTION			8
+#define LCD_CTRL_FLUSH_PARTIAL			9
 
 struct rt_lcd_zone_info
 {
@@ -108,6 +109,14 @@ javacall_result javacall_directui_flush() {
 }
 
 javacall_result javacall_directui_flush_region(int xstart, int ystart, int xend, int yend) {
+	struct rt_lcd_zone_info zone_info;
+
+	zone_info.col_start = xstart;
+	zone_info.col_end = xend;
+	zone_info.row_start = ystart;
+	zone_info.row_end = yend;
+		
+	ioctl(fd, LCD_CTRL_FLUSH_PARTIAL, &zone_info);
 	return JAVACALL_OK;
 }
 
@@ -480,7 +489,11 @@ javacall_result javacall_directui_textout(int font, int color, int x, int y,
 	}
 
 	if (!delayed) {
-		ioctl(fd, LCD_CTRL_FLUSH, NULL);
+		struct rt_lcd_zone_info zone_info;
+
+		memcpy(&zone_info, &refresh_param.zone_info, sizeof(struct rt_lcd_zone_info));
+		
+		ioctl(fd, LCD_CTRL_FLUSH_PARTIAL, &zone_info);
 	}
 	
 	return JAVACALL_OK;

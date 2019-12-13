@@ -25,7 +25,8 @@
 #include <stdio.h>
 #include "javacall_time.h"
 
-static int _RT_RTC_Initialized = 0;
+static volatile int _RT_RTC_Validated = 0;
+static unsigned long _previous_millis = 0;
 
 typedef struct {
 	rt_timer_t handle;
@@ -37,6 +38,12 @@ static void timer_callback(void* handle){
     javacall_callback_func func = (javacall_callback_func)p->func;
     func(handle);
 }
+
+static void rtc_revalidate_timer_callback(void* handle) {
+	(void)handle;
+	_RT_RTC_Validated = 0;
+}
+
 
 /**
  *
@@ -127,22 +134,45 @@ javacall_result javacall_time_finalize_timer(javacall_handle handle) {
  *         format of GMT+/-??:??. For example, GMT-08:00 for PST.
  */
 char* javacall_time_get_local_timezone(void){
-	static char tzstring[128];
-/*	struct timezone tz = {0};
-	int tz_hour, tz_min;
+	static char tzstring[16];
 
-	gettimeofday(0, &tz);
-	tz_hour = (int)(tz.tz_minuteswest / 60);
-	tz_min = (int)(tz.tz_minuteswest - tz_hour*60);
-	
-	if (tz_hour<0){
-		rt_snprintf(tzstring, 128, "GMT-%02d:%02d",tz_hour,-tz_min);
-	}else{
-		rt_snprintf(tzstring, 128, "GMT+%02d:%02d",tz_hour,tz_min);
-	}*/
-
-	rt_snprintf(tzstring, 128, "GMT+08:00");
+	rt_snprintf(tzstring, 16, "GMT+08:00");
 	return tzstring;
+}
+
+
+/**
+ * Get current RTC time (in seconds) from RTC device
+ */
+static unsigned long get_rtc_time() {
+	int fd;    
+	unsigned long curtime = 0;
+	
+	fd = open("/dev/rtc", O_RDWR);
+	if(fd >= 0){
+		rt_kprintf("rtc get \n");	
+		ioctl(fd,RT_DEVICE_CTRL_RTC_GET_TIME,&curtime);
+		close(fd);
+	}	
+
+	return curtime;
+}
+
+/**
+ * Set current RTC time (in seconds) to RTC device
+ */
+static unsigned long set_rtc_time(unsigned long time) {
+	int fd;    
+	unsigned long curtime = time;
+	
+	fd = open("/dev/rtc", O_RDWR);
+	if(fd >= 0){
+		rt_kprintf("rtc set \n");	
+		ioctl(fd,RT_DEVICE_CTRL_RTC_SET_TIME,&curtime);
+		close(fd);
+	}	
+
+	return curtime;
 }
 
 
@@ -152,17 +182,37 @@ char* javacall_time_get_local_timezone(void){
  * @return milliseconds elapsed since midnight (00:00:00), January 1, 1970
  */
 javacall_int64 /*OPTIONAL*/ javacall_time_get_milliseconds_since_1970(void){
-#if 0
-	struct timespec tp;
+	static javacall_int64 _rtc_offset = 0;
+	static int timeInitialized = 0;
 	
-	if (!_RT_RTC_Initialized) {
-		clock_time_system_init();
-		_RT_RTC_Initialized = 1;
+	if (!timeInitialized) {
+		timeInitialized = 1;
+		set_rtc_time(0x5DEF5080); //TODO: this magic number is temp for testing
+
+		//Force to revalidate RTC and its offset every 100 days
+		rt_timer_create("RTCTIMER",  
+                        rtc_revalidate_timer_callback, 
+                        0,  
+                        (rt_tick_t)(RT_TICK_PER_SECOND*60*60*24*100), 
+                        RT_TIMER_FLAG_PERIODIC); 
 	}
-	clock_gettime(CLOCK_REALTIME, &tp); 
-	return (javacall_int64)tp.tv_sec*1000LL+tp.tv_nsec/1000LL;
-#endif
-	return (javacall_int64)TICKS_TO_MILISECS(rt_tick_get());
+
+	unsigned long curr_millis = TICKS_TO_MILISECS(rt_tick_get());
+
+	if (curr_millis < _previous_millis) {
+		//ticks overflowed
+		_RT_RTC_Validated = 0;
+	}
+	
+	if (!_RT_RTC_Validated) {
+		_RT_RTC_Validated = 1;
+		_rtc_offset = get_rtc_time()*1000LL;
+		curr_millis = TICKS_TO_MILISECS(rt_tick_get());
+		_rtc_offset -= (javacall_int64)curr_millis;
+	}
+
+	_previous_millis = curr_millis;
+	return (javacall_int64)curr_millis+_rtc_offset;
 }
 
 

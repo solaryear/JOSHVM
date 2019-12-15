@@ -237,7 +237,9 @@ public class Protocol extends ConnectionBaseAdapter implements FileConnection {
         }
 
         fileHandler.openForWrite();
-        fileHandler.positionForWrite(byteOffset);
+		if (byteOffset > 0) {
+        	fileHandler.positionForWrite(byteOffset);
+		}
 
         fos = super.openOutputStream();
 

@@ -20,8 +20,10 @@
 MODULE_NAME=jsr75
 
 JSR_JAVA_FILES_DIR += $(JSR75_DIR)/src/core/classes \
-  $(JSR75_DIR)/src/kvem/classes/share
+  $(JSR75_DIR)/src/kvem/classes/share \
+  $(JDEVFS_DIR)/src/classes \
+  $(JDEVFS_DIR)/src/impl/classes
 
-DOC_SOURCE_$(MODULE_NAME)_PATH=$(BUILD_ROOT_DIR)/jsr75/src/core/classes
+DOC_SOURCE_$(MODULE_NAME)_PATH=$(BUILD_ROOT_DIR)/jsr75/src/core/classes$(DOC_PATH_SEP)$(BUILD_ROOT_DIR)/src/classes
 DOC_SOURCE_PATH := $(DOC_SOURCE_PATH)$(DOC_SOURCE_$(MODULE_NAME)_PATH)$(DOC_PATH_SEP)
-DOC_$(MODULE_NAME)_PACKAGES += javax.microedition.io.file
+DOC_$(MODULE_NAME)_PACKAGES += javax.microedition.io.file smartps.jdevfs smartps.jdevfs.ioctl

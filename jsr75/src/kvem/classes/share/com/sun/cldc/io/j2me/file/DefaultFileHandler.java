@@ -551,6 +551,12 @@ class DefaultFileHandler implements BaseFileHandler {
     public  native void openForWrite() throws IOException;
 
     /**
+     * Opens the file for reading and writing.
+     * @throws IOException if any error occurs during input/output operations.
+     */
+	public  native void openForReadAndWrite() throws IOException;
+
+    /**
      * Closes the file for writing.
      * @throws IOException if any error occurs during input/output operations.
      */
@@ -869,4 +875,12 @@ class DefaultFileHandler implements BaseFileHandler {
 
         return elements;
     }
+
+	int getWriteHandle() {
+		return writeHandle;
+	}
+
+	int getReadHandle() {
+		return readHandle;
+	}
 }

@@ -122,7 +122,7 @@ javacall_result javacall_socket_open(javacall_ip_version ip_version,
          return JAVACALL_FAIL;
      }
 
-	 *pHandle = (javacall_handle*)s;
+	 *pHandle = (javacall_handle)s;
 	 return JAVACALL_OK;
 }
 

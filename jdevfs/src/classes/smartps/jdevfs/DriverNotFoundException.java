@@ -18,38 +18,16 @@
  * Please visit www.joshvm.org if you need additional information or
  * have any questions.
  */
+package smartps.jdevfs;
 
-#include "javacall_defs.h"
+public class DriverNotFoundException extends java.io.IOException {
 
-static char* javacall_static_properties_application_md_keys[] = {
-    "smartps.jdevfs.drivers.METER",
-	NULL
-};
+    public DriverNotFoundException() {
+        super();
+    }
 
-static char* javacall_static_properties_application_md_values[] = {
-	"com.tengineer.smartps.jdevfs.DevfsNonBlockingHandler",
-    NULL
-};
-
-
-static char* javacall_static_properties_internal_md_keys[] = {
-    NULL
-};
-
-
-static char* javacall_static_properties_internal_md_values[] = {
-    NULL
-};
-
-char** javacall_static_properties_md_keys[] = {
-    javacall_static_properties_application_md_keys,
-    javacall_static_properties_internal_md_keys,
-    NULL
-};
-
-char** javacall_static_properties_md_values[] = {
-    javacall_static_properties_application_md_values,
-    javacall_static_properties_internal_md_values,
-    NULL
-};
+    public DriverNotFoundException(String message) {
+        super(message);
+    }
+}
 

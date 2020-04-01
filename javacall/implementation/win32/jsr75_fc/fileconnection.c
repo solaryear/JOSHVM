@@ -640,7 +640,7 @@ javacall_result javacall_fileconnection_get_total_size(const javacall_utf16* pat
  */
 javacall_result javacall_fileconnection_get_mounted_roots(javacall_utf16* /* OUT */ roots,
                                                           int rootsLen) {
-    static char* root = "internal/\nroot/\nprivate/\nPhone/";
+    static char* root = "internal/\nroot/\nprivate/\ndev/";
     int i;
     int len = strlen(root);
    
@@ -703,9 +703,9 @@ javacall_result javacall_fileconnection_get_path_for_root(const javacall_utf16* 
 		return JAVACALL_FAIL;
 	}
 
-	static char* realroot_def[] = {"C:\\java\\internal\\", "C:\\java\\user\\", "C:\\java\\user\\", "C:\\java\\user\\"};
-	static char* root[] = {"internal/", "root/", "private/", "Phone/"};
-	static char* propname[] = {"internal_dir", "root_dir", "private_dir", "user_dir"};
+	static char* realroot_def[] = {"C:\\java\\internal\\", "C:\\java\\user\\", "C:\\java\\user\\", "/dev/"};
+	static char* root[] = {"internal/", "root/", "private/", "dev/"};
+	static char* propname[] = {"internal_dir", "root_dir", "private_dir", "dev_dir"};
 	int i, r;
 	int len;
 	int ne;

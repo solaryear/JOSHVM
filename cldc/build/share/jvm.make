@@ -323,6 +323,7 @@ endif
 
 ifeq ($(ENABLE_EXTRA_PROTOCOLS), true)
 Obj_Files           +=         $(PROTOCOL_Obj_Files)
+ENABLE_CFLAGS       +=         -DENABLE_EXTRA_PROTOCOLS
 endif
 
 ifeq ($(ENABLE_DIRECTUI), true)

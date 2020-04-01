@@ -28,6 +28,8 @@
 
 #include <kni.h>
 #include <kni_globals.h>
+#include <sni.h>
+#include <sni_event.h>
 #include <PCSLString_Util.h>
 #include <pcsl_memory.h>
 #include <pcsl_string.h>
@@ -35,7 +37,7 @@
 #include <javacall_defs.h>
 #include <javacall_file.h>
 #include <javacall_dir.h>
-
+#include <javacall_jdevfs.h>
 #include <javacall_fileconnection.h>
 
 /*
@@ -339,11 +341,14 @@ static void closeHandles(jobject objectHandle, int flags)
             }
             /* anyway reset the read handle */
             KNI_SetIntField(objectHandle, readHandleID, (jint)NULL);
+			if (JAVACALL_FILE_O_RDWR == flags) {
+				KNI_SetIntField(objectHandle, writeHandleID, (jint)NULL);
+			}
         }
     }
 
     // IMPL_NOTE: javacall file flags cannot be used as a mask due their values.
-    if ((JAVACALL_FILE_O_WRONLY == flags) || (JAVACALL_FILE_O_RDWR == flags))
+    if (JAVACALL_FILE_O_WRONLY == flags)
     {
         javacall_handle writeHandle = (javacall_handle)KNI_GetIntField(objectHandle, writeHandleID);
         if (NULL != writeHandle)
@@ -356,6 +361,88 @@ static void closeHandles(jobject objectHandle, int flags)
             KNI_SetIntField(objectHandle, writeHandleID, (jint)NULL);
         }
     }
+}
+
+static void openForReadAndWrite(int rwflags)
+{
+    const pcsl_string * fileName   = NULL;
+    javacall_handle     handle     = NULL;
+    const int           flags      = rwflags;
+
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(objectHandle);
+
+    KNI_GetThisPointer(objectHandle);
+
+    fileName = (const pcsl_string *)(long)KNI_GetLongField(objectHandle, fileNameID);
+
+	if ((rwflags != JAVACALL_FILE_O_RDONLY) &&
+       (rwflags != JAVACALL_FILE_O_WRONLY) &&
+       (rwflags != JAVACALL_FILE_O_RDWR)) {
+       
+        KNI_ThrowNew(KNIIllegalArgumentException, EXCEPTION_MSG(fcOpenFileFailed));
+		
+    } else {
+
+        if ((rwflags == JAVACALL_FILE_O_RDONLY) || (rwflags == JAVACALL_FILE_O_RDWR)) {
+            handle   = (javacall_handle*)KNI_GetIntField(objectHandle, readHandleID);
+        } else {
+            handle   = (javacall_handle*)KNI_GetIntField(objectHandle, writeHandleID);
+        }
+        
+    
+        printPcslString(fileName);
+    
+        if (NULL == fileName)
+        {
+            KNI_ThrowNew(KNINullPointerException, EXCEPTION_MSG(fcFileNameIsNull));
+        }
+        else
+        {
+            if (NULL == handle)
+            {
+                GET_PCSL_STRING_DATA_AND_LENGTH(fileName)
+                if (PCSL_STRING_PARAMETER_ERROR(fileName)) {
+                    KNI_ThrowNew(KNIOutOfMemoryError, NULL);
+                } else {
+                    if(JAVACALL_OK == javacall_fileconnection_dir_exists(fileName_data, fileName_len))
+                    {
+                        KNI_ThrowNew(KNIIOException, EXCEPTION_MSG(fcFileIsDirectory));
+                    }
+                    else
+                    {
+                        if (JAVACALL_OK != javacall_file_open(fileName_data, fileName_len, flags, &handle))
+                        {
+                            KNI_ThrowNew(KNIIOException, EXCEPTION_MSG(fcOpenFileFailed));
+                        }
+                        else
+                        {
+                            if ((rwflags == JAVACALL_FILE_O_RDONLY) || (rwflags == JAVACALL_FILE_O_RDWR)) {
+                                KNI_SetIntField(objectHandle, readHandleID, (jint)handle);
+                            }
+
+							if ((rwflags == JAVACALL_FILE_O_WRONLY) || (rwflags == JAVACALL_FILE_O_RDWR)) {
+                                KNI_SetIntField(objectHandle, writeHandleID, (jint)handle);
+                            }
+                        }
+                    }
+                }
+                RELEASE_PCSL_STRING_DATA_AND_LENGTH
+            }
+            else
+            {
+                /**
+                 * The specification forbids opening more than one input stream
+                 * for each file connection.
+                 */
+                KNI_ThrowNew(KNIIOException, EXCEPTION_MSG(fcISAlreadyOpened));
+            }
+        }
+	}
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+
 }
 
 //-----------------------------------------------------------------------------
@@ -1505,67 +1592,7 @@ Java_com_sun_cldc_io_j2me_file_DefaultFileHandler_lastModified()
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_cldc_io_j2me_file_DefaultFileHandler_openForRead()
 {
-    const pcsl_string * fileName   = NULL;
-    javacall_handle     handle     = NULL;
-    const int           flags      = JAVACALL_FILE_O_RDONLY;
-
-    DEBUG_PRINT("File.openForRead() >>\n");
-
-
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(objectHandle);
-
-    KNI_GetThisPointer(objectHandle);
-
-    fileName = (const pcsl_string *)(long)KNI_GetLongField(objectHandle, fileNameID);
-    handle   = (javacall_handle*)KNI_GetIntField(objectHandle, readHandleID);
-
-    printPcslString(fileName);
-
-    if (NULL == fileName)
-    {
-        KNI_ThrowNew(KNINullPointerException, EXCEPTION_MSG(fcFileNameIsNull));
-    }
-    else
-    {
-        if (NULL == handle)
-        {
-            GET_PCSL_STRING_DATA_AND_LENGTH(fileName)
-            if (PCSL_STRING_PARAMETER_ERROR(fileName)) {
-                KNI_ThrowNew(KNIOutOfMemoryError, NULL);
-            } else {
-                if(JAVACALL_OK == javacall_fileconnection_dir_exists(fileName_data, fileName_len))
-                {
-                    KNI_ThrowNew(KNIIOException, EXCEPTION_MSG(fcFileIsDirectory));
-                }
-                else
-                {
-                    if (JAVACALL_OK != javacall_file_open(fileName_data, fileName_len,
-                            flags, &handle))
-                    {
-                        KNI_ThrowNew(KNIIOException, EXCEPTION_MSG(fcOpenFileFailed));
-                    }
-                    else
-                    {
-                        KNI_SetIntField(objectHandle, readHandleID, (jint)handle);
-                    }
-                }
-            }
-            RELEASE_PCSL_STRING_DATA_AND_LENGTH
-        }
-        else
-        {
-            /**
-             * The specification forbids opening more than one input stream
-             * for each file connection.
-             */
-            KNI_ThrowNew(KNIIOException, EXCEPTION_MSG(fcISAlreadyOpened));
-        }
-    }
-    DEBUG_PRINT("File.openForRead() <<\n");
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
+    openForReadAndWrite(JAVACALL_FILE_O_WRONLY);
 }
 
 /*
@@ -1574,67 +1601,13 @@ Java_com_sun_cldc_io_j2me_file_DefaultFileHandler_openForRead()
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_cldc_io_j2me_file_DefaultFileHandler_openForWrite()
 {
-    const pcsl_string * fileName   = NULL;
-    javacall_handle     handle     = NULL;
-    const int           flags      = JAVACALL_FILE_O_WRONLY;
+    openForReadAndWrite(JAVACALL_FILE_O_WRONLY);
+}
 
-    DEBUG_PRINT("File.openForWrite() >>\n");
-
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(objectHandle);
-
-    KNI_GetThisPointer(objectHandle);
-
-    handle   = (javacall_handle)KNI_GetIntField(objectHandle, writeHandleID);
-    fileName = (const pcsl_string *)(long)KNI_GetLongField(objectHandle, fileNameID);
-
-    printPcslString(fileName);
-
-    if (NULL == fileName)
-    {
-        KNI_ThrowNew(KNINullPointerException, EXCEPTION_MSG(fcFileNameIsNull));
-    }
-    else
-    {
-        if (NULL == handle)
-        {
-            GET_PCSL_STRING_DATA_AND_LENGTH(fileName)
-            if (PCSL_STRING_PARAMETER_ERROR(fileName)) {
-                KNI_ThrowNew(KNIOutOfMemoryError, NULL);
-            } else {
-                if(JAVACALL_OK == javacall_fileconnection_dir_exists(fileName_data, fileName_len))
-                {
-                    KNI_ThrowNew(KNIIOException, EXCEPTION_MSG(fcFileIsDirectory));
-                }
-                else
-                {
-                    if (JAVACALL_OK != javacall_file_open(fileName_data, fileName_len,
-                            flags, &handle))
-                    {
-                        KNI_ThrowNew(KNIIOException, EXCEPTION_MSG(fcOpenFileFailed));
-                    }
-                    else
-                    {
-                        KNI_SetIntField(objectHandle, writeHandleID, (jint)handle);
-                    }
-                }
-            }
-            RELEASE_PCSL_STRING_DATA_AND_LENGTH
-        }
-        else
-        {
-            /**
-             * The specification forbids opening more than one output stream
-             * for each file connection.
-             */
-            KNI_ThrowNew(KNIIOException, EXCEPTION_MSG(fcOSAlreadyOpened));
-        }
-    }
-
-    DEBUG_PRINT("File.openForWrite() <<\n");
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_cldc_io_j2me_file_DefaultFileHandler_openForReadAndWrite()
+{
+    openForReadAndWrite(JAVACALL_FILE_O_RDWR);
 }
 
 /*
@@ -2142,3 +2115,86 @@ Java_com_sun_cldc_io_j2me_file_DefaultFileHandler_initialize()
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_cldc_io_j2me_file_DevfsDefaultHandler_ioctl0() {	
+	SNIReentryData* info;
+	void *arg, *context;
+	int status, length;
+
+	jint handle = KNI_GetParameterAsInt(1);
+	jlong cmd = KNI_GetParameterAsLong(2);
+
+	KNI_StartHandles(1);
+    KNI_DeclareHandle(byteArrHandle);
+	
+	
+	KNI_GetParameterAsObject(3, byteArrHandle);
+	length = KNI_GetArrayLength(byteArrHandle);
+
+	info = (SNIReentryData*)SNI_GetReentryData(NULL);
+	
+	if (info == NULL) {   /* First invocation */		
+		arg = javacall_malloc(length*sizeof(jbyte));
+		KNI_GetRawArrayRegion(byteArrHandle, 0, length * sizeof(jbyte), arg);
+		
+		status = javacall_jdevfs_ioctl_start((javacall_handle)handle, cmd, arg, length);
+	} else {
+		arg = info->pContext;
+		status = info->status;
+		if (status == JAVACALL_OK) {
+			status = javacall_jdevfs_ioctl_finish((javacall_handle)handle, cmd, arg, length);
+		}
+	}
+
+	if (status == JAVACALL_WOULD_BLOCK) {
+		SNIEVT_wait(JDEVFS_IOCTL_SIGNAL, (int)handle, arg);
+	} else if (status == JAVACALL_INTERRUPTED) {
+		KNI_ThrowNew(KNIInterruptedIOException, "jdevfs: ioctrl interrupted");
+	} else if (status != JAVACALL_OK) {
+		KNI_ThrowNew(KNIIOException, "jdevfs: ioctrl error");
+	} else {
+		//JAVACALL_OK
+		//restore returned args to Java byte array
+		KNI_SetRawArrayRegion(byteArrHandle, 0, length, arg);
+	}
+
+	if (status != JAVACALL_WOULD_BLOCK) {
+		//free mem
+		javacall_free(arg);
+	}
+
+	KNI_EndHandles();
+	KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+Java_com_sun_cldc_io_j2me_file_DevfsDefaultHandler_poll0() {
+	jint handle = KNI_GetParameterAsInt(1);
+	javacall_bool ret = KNI_FALSE;
+	
+	if (JAVACALL_OK != javacall_jdevfs_poll((javacall_handle)handle, &ret)) {
+		KNI_ThrowNew(KNIIOException, "jdevfs: poll error");
+	}
+
+	KNI_ReturnBoolean(ret?KNI_TRUE:KNI_FALSE);
+}
+
+KNIEXPORT KNI_RETURNTYPE_LONG
+Java_com_sun_cldc_io_j2me_file_DevfsDefaultHandler_lseek0() {
+    javacall_file_seek_flags flag;
+	jlong ret;
+	
+	jint handle = KNI_GetParameterAsInt(1);
+	jlong offset = KNI_GetParameterAsLong(2);
+	jint whence = KNI_GetParameterAsInt(3);
+
+	if (whence == 0) flag = JAVACALL_FILE_SEEK_SET;
+	else if (whence == 1) flag = JAVACALL_FILE_SEEK_CUR;
+	else flag = JAVACALL_FILE_SEEK_END;
+	ret = javacall_jdevfs_seek((javacall_handle)handle, offset, flag);
+	
+	KNI_ReturnLong(ret);
+}
+
+

@@ -53,16 +53,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         hdc = BeginPaint(hWnd, &ps);
 		RECT clientRect;
 		GetClientRect(hWnd, &clientRect);
-<<<<<<< HEAD
-
         BitBlt(hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hDefaultDisplayHdc, 0, 0, SRCCOPY);
         EndPaint(hWnd, &ps);
         break;
-=======
-        BitBlt(hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hDefaultDisplayHdc, 0, 0, SRCCOPY);
-        EndPaint(hWnd, &ps);  
-        break;  
->>>>>>> scm4xx_jdevfs
 	case WM_KEYDOWN:
 	case WM_KEYUP:
 		javacall_printf("CHAR %c\n", wParam);
@@ -115,7 +108,6 @@ static javacall_result init_window(void) {
 
     if (!RegisterClassEx(&wcex))
     {
-<<<<<<< HEAD
         return JAVACALL_FAIL;
     }
 
@@ -124,18 +116,7 @@ static javacall_result init_window(void) {
         "EMUSCR",
         WS_OVERLAPPED,
         CW_USEDEFAULT, CW_USEDEFAULT,
-        SCREEN_WIDTH+16, SCREEN_HEIGHT+58,
-=======
-        return JAVACALL_FAIL;  
-    }  
-	
-    HWND hWnd = CreateWindow(  
-        "JOSHSCRCLS",  
-        "JOSHSCR",  
-        WS_OVERLAPPED,  
-        CW_USEDEFAULT, CW_USEDEFAULT,  
-        SCREEN_WIDTH+16, SCREEN_HEIGHT+38,  
->>>>>>> scm4xx_jdevfs
+        SCREEN_WIDTH+16, SCREEN_HEIGHT+48,
         NULL,  
         NULL,
         hInstance,
@@ -189,15 +170,8 @@ javacall_result javacall_directui_get_screen(int* screen_width, int* screen_heig
 	if (JAVACALL_OK != ensure_initialized()) {
 		return JAVACALL_FAIL;
 	}
-<<<<<<< HEAD
-
-    *screen_width = 240;
-    *screen_height = 320;
-=======
-	
     *screen_width = SCREEN_WIDTH;
     *screen_height = SCREEN_HEIGHT;
->>>>>>> scm4xx_jdevfs
     return JAVACALL_OK;
 }
 

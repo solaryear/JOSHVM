@@ -34,6 +34,9 @@ static int _down_key = -1;
 static javacall_keypress_type _down_keyevent;
 static int direct_ui_initialized = 0;
 
+#define SCREEN_WIDTH 208
+#define SCREEN_HEIGHT 80
+
 /* convert color to 16bit color */
 #define RGB16TORGB24(x) (((( x ) << 8) & 0x00F80000) | \
                          ((( x ) << 5) & 0x0000FC00) | \
@@ -50,10 +53,16 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         hdc = BeginPaint(hWnd, &ps);
 		RECT clientRect;
 		GetClientRect(hWnd, &clientRect);
+<<<<<<< HEAD
 
         BitBlt(hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hDefaultDisplayHdc, 0, 0, SRCCOPY);
         EndPaint(hWnd, &ps);
         break;
+=======
+        BitBlt(hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hDefaultDisplayHdc, 0, 0, SRCCOPY);
+        EndPaint(hWnd, &ps);  
+        break;  
+>>>>>>> scm4xx_jdevfs
 	case WM_KEYDOWN:
 	case WM_KEYUP:
 		javacall_printf("CHAR %c\n", wParam);
@@ -106,6 +115,7 @@ static javacall_result init_window(void) {
 
     if (!RegisterClassEx(&wcex))
     {
+<<<<<<< HEAD
         return JAVACALL_FAIL;
     }
 
@@ -115,6 +125,17 @@ static javacall_result init_window(void) {
         WS_OVERLAPPED,
         CW_USEDEFAULT, CW_USEDEFAULT,
         SCREEN_WIDTH+16, SCREEN_HEIGHT+58,
+=======
+        return JAVACALL_FAIL;  
+    }  
+	
+    HWND hWnd = CreateWindow(  
+        "JOSHSCRCLS",  
+        "JOSHSCR",  
+        WS_OVERLAPPED,  
+        CW_USEDEFAULT, CW_USEDEFAULT,  
+        SCREEN_WIDTH+16, SCREEN_HEIGHT+38,  
+>>>>>>> scm4xx_jdevfs
         NULL,  
         NULL,
         hInstance,
@@ -128,7 +149,7 @@ static javacall_result init_window(void) {
 
 	HDC hdc = GetDC(hWnd);
 	HDC hdcMem = CreateCompatibleDC(hdc);
-	hDefaultDisplayCanvas = CreateCompatibleBitmap(hdc, 240, 320);
+	hDefaultDisplayCanvas = CreateCompatibleBitmap(hdc, SCREEN_WIDTH, SCREEN_HEIGHT);
     hbmOld = SelectObject(hdcMem, hDefaultDisplayCanvas);
 	ReleaseDC(hWnd, hdc);
     ShowWindow(hWnd, SW_SHOWNORMAL);
@@ -168,9 +189,15 @@ javacall_result javacall_directui_get_screen(int* screen_width, int* screen_heig
 	if (JAVACALL_OK != ensure_initialized()) {
 		return JAVACALL_FAIL;
 	}
+<<<<<<< HEAD
 
     *screen_width = 240;
     *screen_height = 320;
+=======
+	
+    *screen_width = SCREEN_WIDTH;
+    *screen_height = SCREEN_HEIGHT;
+>>>>>>> scm4xx_jdevfs
     return JAVACALL_OK;
 }
 
@@ -179,7 +206,7 @@ void javacall_directui_clear(int rgb) {
 		return;
 	}
 	HBRUSH hBrush = CreateSolidBrush(RGB((rgb>>16)&0xff,(rgb>>8)&0xff,rgb&0xff));
-	RECT scrrect = {0,0,240,320};
+	RECT scrrect = {0,0,SCREEN_WIDTH, SCREEN_HEIGHT};
 	FillRect(hDefaultDisplayHdc, &scrrect, hBrush);
 	DeleteObject(hBrush);
 }

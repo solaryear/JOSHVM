@@ -41,9 +41,9 @@ extern "C" {
 #include "javacall_file.h"
 #include "javacall_dir.h"
 #include "javacall_logging.h"
+#include "javacall_jdevfs.h"
 
-
-#define DEBUG_PRINT(x)
+#define DEBUG_PRINT(x) printf(x)
 #define MAX_NULL_TERMINATED_NAME_LENGTH (JAVACALL_MAX_FILE_NAME_LENGTH + 1)
 
 static int stringlastindexof(unsigned short *str,
@@ -180,6 +180,10 @@ javacall_result javacall_file_open(const javacall_utf16*  unicodeFileName,
     memcpy(wOsFilename, unicodeFileName, fileNameLen*sizeof(wchar_t));
     wOsFilename[fileNameLen] = 0;
 
+	if (wcsstr(wOsFilename, L"/dev/") == &wOsFilename[0]) {
+		return javacall_jdevfs_open(unicodeFileName, fileNameLen, flags, handle);
+	}
+
 
     /* compute open control flag */
     if ((flags & JAVACALL_FILE_O_WRONLY) == JAVACALL_FILE_O_WRONLY) {
@@ -223,8 +227,8 @@ javacall_result javacall_file_close(javacall_handle handle){
 	DEBUG_PRINT("javacall_file_close\n");
 
     int res;
-    res = _close((int) handle);
-    if(res == -1) {
+	res = _close((int) handle);
+	if(res == -1) {
         return JAVACALL_FAIL;
     }
     return JAVACALL_OK;
@@ -246,7 +250,7 @@ long javacall_file_read(javacall_handle handle,
                         long size){
 	DEBUG_PRINT("javacall_file_read\n");
 
-    return _read((int) handle, buf, size);
+   	return _read((int) handle, buf, size);
 }
 
 /**
@@ -263,8 +267,7 @@ long javacall_file_write(javacall_handle handle,
                          const unsigned char* buf,
                          long size) {
 	DEBUG_PRINT("javacall_file_write\n");
-
-    return _write((int) handle, buf, size);
+   	return _write((int) handle, buf, size);
 }
 
 /**

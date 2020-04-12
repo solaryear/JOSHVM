@@ -18,40 +18,27 @@
  * Please visit www.joshvm.org if you need additional information or
  * have any questions.
  */
+package smartps.jdevfs;
 
-#include "javacall_defs.h"
+public class DeviceNotSupportException extends Exception {
 
-static char* javacall_static_properties_application_md_keys[] = {
-    "smartps.jdevfs.drivers.METER",
-	"smartps.jdevfs.drivers.POWER_D",
-	NULL
-};
+    /**
+     * Constructs a new {@code DeviceNotFoundException} instance with {@code null} as its detailed reason message.
+     */
+    public DeviceNotSupportException() {
+        super();
+    }
 
-static char* javacall_static_properties_application_md_values[] = {
-	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
-	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
-    NULL
-};
+    /**
+     * Constructs a new {@code DeviceNotFoundException} instance with the specified detailed reason message. The
+     * error message string {@code message} can later be retrieved by the {@link Throwable#getMessage() getMessage} method.
+     *
+     * @param message
+     *            the detailed reason of the exception (may be {@code null}).
+     */
+    public DeviceNotSupportException(String message) {
+        super(message);
+    }
+}
 
-
-static char* javacall_static_properties_internal_md_keys[] = {
-    NULL
-};
-
-
-static char* javacall_static_properties_internal_md_values[] = {
-    NULL
-};
-
-char** javacall_static_properties_md_keys[] = {
-    javacall_static_properties_application_md_keys,
-    javacall_static_properties_internal_md_keys,
-    NULL
-};
-
-char** javacall_static_properties_md_values[] = {
-    javacall_static_properties_application_md_values,
-    javacall_static_properties_internal_md_values,
-    NULL
-};
 

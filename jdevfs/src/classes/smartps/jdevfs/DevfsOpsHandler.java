@@ -19,39 +19,20 @@
  * have any questions.
  */
 
-#include "javacall_defs.h"
+package smartps.jdevfs;
 
-static char* javacall_static_properties_application_md_keys[] = {
-    "smartps.jdevfs.drivers.METER",
-	"smartps.jdevfs.drivers.POWER_D",
-	NULL
-};
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import smartps.jdevfs.ioctl.IOCtrlArguments;
 
-static char* javacall_static_properties_application_md_values[] = {
-	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
-	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
-    NULL
-};
-
-
-static char* javacall_static_properties_internal_md_keys[] = {
-    NULL
-};
-
-
-static char* javacall_static_properties_internal_md_values[] = {
-    NULL
-};
-
-char** javacall_static_properties_md_keys[] = {
-    javacall_static_properties_application_md_keys,
-    javacall_static_properties_internal_md_keys,
-    NULL
-};
-
-char** javacall_static_properties_md_values[] = {
-    javacall_static_properties_application_md_values,
-    javacall_static_properties_internal_md_values,
-    NULL
-};
+public interface DevfsOpsHandler {
+	public void open(String devName, int mode) throws IOException, DeviceNotSupportException;
+	public int read(byte b[], int off, int len) throws IOException;
+	public int write(byte b[], int off, int len) throws IOException;
+	public void close() throws IOException;
+	public void ioctl(int cmd, IOCtrlArguments arg) throws IOException;
+	public boolean poll(int timeout) throws IOException, InterruptedIOException;
+	public boolean poll() throws IOException;
+	public long lseek(long offset, int whence) throws IOException;
+}
 

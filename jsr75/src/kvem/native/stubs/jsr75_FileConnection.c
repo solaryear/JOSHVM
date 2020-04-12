@@ -253,6 +253,12 @@ Java_com_sun_cldc_io_j2me_file_DefaultFileHandler_openForWrite()
     KNI_ReturnVoid();
 }
 
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_cldc_io_j2me_file_DefaultFileHandler_openForReadAndWrite()
+{
+	KNI_ReturnVoid();
+}
+
 /*
  * public native int read(byte b[], int off, int len) throws IOException;
  */
@@ -387,3 +393,19 @@ Java_com_sun_cldc_io_j2me_file_DefaultFileHandler_initialize()
 {
     KNI_ReturnVoid();
 }
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_cldc_io_j2me_file_DevfsDefaultHandler_ioctl0() {
+	KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+Java_com_sun_cldc_io_j2me_file_DevfsDefaultHandler_poll0() {
+	KNI_ReturnBoolean(KNI_FALSE);
+}
+
+KNIEXPORT KNI_RETURNTYPE_LONG
+Java_com_sun_cldc_io_j2me_file_DevfsDefaultHandler_lseek0() {
+	KNI_ReturnLong(0);
+}
+

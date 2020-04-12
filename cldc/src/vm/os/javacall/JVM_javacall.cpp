@@ -306,6 +306,7 @@ static char* args[] = {
 #endif
 }
 
+#if ENABLE_EXTRA_PROTOCOLS
 /**
  * STUBs of javanotify functions. Temp
  **/
@@ -403,6 +404,7 @@ void javanotify_datagram_event(
                              javacall_result operation_result) {
 
 }
+#endif
 
 /*
 #include "javacall_cbs.h"
@@ -415,6 +417,7 @@ void javanotify_incoming_cbs(
 
 */
 
+#if ENABLE_DIO
 extern "C" void javanotify_gpio_port_value_changed(int h, int val ){
 
 }
@@ -440,6 +443,7 @@ extern "C" void javanotify_gpio_pin_closed(const javacall_handle h) {
 
 	javacall_event_send((unsigned char*)&rd, sizeof(SNIReentryData));
 }
+#endif
 
 #if ENABLE_DIRECTUI
 #include "javacall_directui.h"

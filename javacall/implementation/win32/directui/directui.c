@@ -50,12 +50,18 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         hdc = BeginPaint(hWnd, &ps);  
 		RECT clientRect;
 		GetClientRect(hWnd, &clientRect);
+<<<<<<< Updated upstream
         BitBlt(hdc, 0, 0, 240, 320, hDefaultDisplayHdc, 0, 0, SRCCOPY);
         EndPaint(hWnd, &ps);  
+=======
+        BitBlt(hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hDefaultDisplayHdc, 0, 0, SRCCOPY);
+        EndPaint(hWnd, &ps);
+		printf("DirectUI Wnd repaint\n");
+>>>>>>> Stashed changes
         break;  
 	case WM_KEYDOWN:
 	case WM_KEYUP:
-		//javacall_printf("CHAR %c\n", wParam);
+		javacall_printf("CHAR %c\n", wParam);
 		if ((wParam >= 0x30) && (wParam <= 0x39)) {
 			_down_key = wParam;
 		} else if (wParam == VK_F1) {
@@ -76,7 +82,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			break;
 		}
 		_down_keyevent = (message == WM_KEYDOWN)?JAVACALL_KEYPRESSED:JAVACALL_KEYRELEASED;
-		javanotify_key_event(JAVACALL_KEY_0, JAVACALL_KEYPRESSED);
+		javanotify_key_event(-1, JAVACALL_KEYPRESSED);
 		
 		break;
     default:  
@@ -110,10 +116,14 @@ static javacall_result init_window(void) {
 	
     HWND hWnd = CreateWindow(  
         "JOSHSCRCLS",  
-        "JOSHSCR",  
+        "EMUSCR",  
         WS_OVERLAPPED,  
         CW_USEDEFAULT, CW_USEDEFAULT,  
+<<<<<<< Updated upstream
         256, 358,  
+=======
+        SCREEN_WIDTH+16, SCREEN_HEIGHT+58,  
+>>>>>>> Stashed changes
         NULL,  
         NULL,  
         hInstance,  
@@ -202,8 +212,26 @@ javacall_result javacall_directui_flush_region(int xstart, int ystart, int xend,
 	scrrect.right = xend-1;
 	scrrect.left = yend-1;
 	
-	InvalidateRect(hDefaultDisplayWnd, NULL, FALSE);
+	InvalidateRect(hDefaultDisplayWnd, &scrrect, FALSE);
 	return JAVACALL_OK;
+}
+#if 0
+static int font_h(int size) {
+	if (size < 2) {
+		return 2*8;
+	} else if (size > 4){
+		return 4*8;
+	}
+	return size*8;
+}
+
+static int font_w(int size) {
+	if (size <= 2) {
+		return 8;
+	} else if (size >= 4){
+		return 10;
+	}
+	return 12;
 }
 
 javacall_result javacall_directui_textout(int font, int color, int x, int y,
@@ -211,22 +239,93 @@ javacall_result javacall_directui_textout(int font, int color, int x, int y,
     if (JAVACALL_OK != ensure_initialized()) {
 		return JAVACALL_FAIL;
 	}
+	HFONT hFont, hOldFont; 
 
-	TextOutW(hDefaultDisplayHdc, x,y, text, textLen);
-	if (!delayed) {
-		javacall_directui_flush();
+	hFont = CreateFont(font_h(font),font_w(font),0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
+	                CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY, VARIABLE_PITCH,NULL);
+
+
+	// Select the variable stock font into the specified device context. 
+	if (hOldFont = (HFONT)SelectObject(hDefaultDisplayHdc, hFont)) 
+	{
+	    TextOutW(hDefaultDisplayHdc, x,y*8, text, textLen);
+
+	    // Restore the original font.        
+	    SelectObject(hDefaultDisplayHdc, hOldFont); 
 	}
+	DeleteObject(hFont);
+	
+	wprintf(L"javacall_directui_textout: %s, x=%d, y=%d, textLen=%d, delayed=%d\n", text, x, y, textLen, delayed);
+	//if (!delayed) {
+		javacall_directui_flush();
+	//}
     return JAVACALL_OK;
+}
+
+static int valid_font(int size) {
+	if (size < 2) {
+		return 2;
+	} else if (size > 4){
+		return 4;
+	}
+	return size;
+}
+
+static get_margin(int font) {
+	return font == 4?2:0;
+}
+
+
+static int get_char_width(int font, javacall_utf16 unicode) {
+	int size;
+	
+	if ((unicode >= 0x0100) && (unicode <= 0x01FF)) {
+		//PictureChar
+		size = 12;
+	} else if ((unicode >= 0x0200) && (unicode <= 0x02FF)) {
+		//UnitChar
+		size = 20;
+	} else if (font == 2) {
+		size = 12;
+	} else if (font == 3) {
+		size = 16;
+	} else {
+		if ((unicode == (javacall_utf16)'.') || (unicode == (javacall_utf16)':')) {
+			size = 4;
+		} else {
+			size= 14;
+		}
+	}
+
+	return size + get_margin(font);
 }
 
 javacall_result javacall_directui_text_getsize(int font, const javacall_utf16* text,
         int textLen, int* width, int* height) {
-    if (JAVACALL_OK != ensure_initialized()) {
-		return JAVACALL_FAIL;
+	
+	int w = 0, i;
+	
+    font = valid_font(font);
+	
+	for (i = 0; i < textLen; i++) {
+		w += get_char_width(font, text[i]);
 	}
-	*width = 12;
-	*height = 16;
-    return JAVACALL_OK;
+	
+	*width = w;
+	*height = font;
+	
+	return JAVACALL_OK;
+}
+#endif
+
+void drawPixel(int x, int y, int color) {
+	COLORREF c;
+	if (color) {
+		c = RGB(0,0,0);
+	} else {
+		c = RGB(255,255,255);
+	}
+	SetPixel(hDefaultDisplayHdc, x, y, c);
 }
 
 javacall_result javacall_directui_image_getsize(javacall_uint8* image_data,
@@ -324,6 +423,8 @@ javacall_result javacall_directui_key_event_get(javacall_keypress_code* key, jav
 	if (JAVACALL_OK != ensure_initialized()) {
 		return JAVACALL_FAIL;
 	}
+
+	printf("javacall_directui_key_event_get: _down_key=%d, _down_keyevent=%d\n", _down_key, _down_keyevent);
 	
 	*type = _down_keyevent;
 	

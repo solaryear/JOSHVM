@@ -399,8 +399,12 @@ Java_com_sun_cldc_io_j2me_socket_Protocol_writeByte() {
 
 KNIEXPORT KNI_RETURNTYPE_INT
 Java_com_sun_cldc_io_j2me_socket_Protocol_available0() {
-  // unsupported. Not used by CLDC TCK
-  KNI_ReturnInt(0);
+  int count=0;
+  void *handle = (void*)KNI_GetParameterAsInt(1);
+  if (PCSL_NET_SUCCESS != pcsl_socket_available(handle, &count)) {
+	count = 0;
+  }
+  KNI_ReturnInt(count);
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID

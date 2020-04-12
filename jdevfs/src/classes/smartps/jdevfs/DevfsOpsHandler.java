@@ -22,16 +22,17 @@
 package smartps.jdevfs;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import smartps.jdevfs.ioctl.IOCtrlArguments;
 
 public interface DevfsOpsHandler {
-	public void open(String devName, int mode) throws IOException;
+	public void open(String devName, int mode) throws IOException, DeviceNotSupportException;
 	public int read(byte b[], int off, int len) throws IOException;
 	public int write(byte b[], int off, int len) throws IOException;
 	public void close() throws IOException;
 	public void ioctl(int cmd, IOCtrlArguments arg) throws IOException;
-	public boolean poll(int timeout) throws IOException;
+	public boolean poll(int timeout) throws IOException, InterruptedIOException;
 	public boolean poll() throws IOException;
 	public long lseek(long offset, int whence) throws IOException;
- }
+}
 

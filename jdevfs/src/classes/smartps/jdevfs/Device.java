@@ -80,6 +80,8 @@ public class Device {
 			filehandle.open(devName, mode);
 		} catch (StringIndexOutOfBoundsException e) {
 			throw new DriverNotFoundException(e.toString());
+		} catch (DeviceNotSupportException dnse) {
+			throw new DriverNotFoundException(dnse.toString());
 		}
 	}
 	

@@ -22,6 +22,7 @@
 package com.sun.cldc.io.j2me.file;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import smartps.jdevfs.Device;
 import smartps.jdevfs.DevfsOpsHandler;
 import smartps.jdevfs.ioctl.IOCtrlArguments;
@@ -104,14 +105,14 @@ public class DevfsDefaultHandler implements DevfsOpsHandler {
 		ioctl0(handle, cmd, arg.asByteArray());
 	}
 	
-	public boolean poll(int timeout) throws IOException {
+	public boolean poll(int timeout) throws IOException, InterruptedIOException {
 		checkOpen();
-		throw new IOException("Timeout is currently not supported");
+		return poll0(handle, timeout);
 	}
 
 	public boolean poll() throws IOException {
 		checkOpen();
-		return poll0(handle);
+		return poll0(handle, 0);
 	}
 	
 	public long lseek(long offset, int whence) throws IOException {
@@ -121,7 +122,7 @@ public class DevfsDefaultHandler implements DevfsOpsHandler {
 
 	final protected native void ioctl0(int handle, int cmd, byte[] arg) throws IOException;
 
-	final protected native boolean poll0(int handle) throws IOException;
+	final protected native boolean poll0(int handle, int timeout) throws IOException;
 	
 	final protected native long lseek0(int handle, long offset, int whence) throws IOException;
 

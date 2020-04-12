@@ -39,26 +39,21 @@ static int direct_ui_initialized = 0;
                          ((( x ) << 5) & 0x0000FC00) | \
                          ((( x ) << 3) & 0x000000F8) )
 
-static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)  
-{  
-    PAINTSTRUCT ps;  
-    HDC hdc;  
-  
-    switch (message)  
-    {  
-    case WM_PAINT:  
-        hdc = BeginPaint(hWnd, &ps);  
+static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    PAINTSTRUCT ps;
+    HDC hdc;
+
+    switch (message)
+    {
+    case WM_PAINT:
+        hdc = BeginPaint(hWnd, &ps);
 		RECT clientRect;
 		GetClientRect(hWnd, &clientRect);
-<<<<<<< Updated upstream
-        BitBlt(hdc, 0, 0, 240, 320, hDefaultDisplayHdc, 0, 0, SRCCOPY);
-        EndPaint(hWnd, &ps);  
-=======
+
         BitBlt(hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hDefaultDisplayHdc, 0, 0, SRCCOPY);
         EndPaint(hWnd, &ps);
-		printf("DirectUI Wnd repaint\n");
->>>>>>> Stashed changes
-        break;  
+        break;
 	case WM_KEYDOWN:
 	case WM_KEYUP:
 		javacall_printf("CHAR %c\n", wParam);
@@ -83,64 +78,60 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 		}
 		_down_keyevent = (message == WM_KEYDOWN)?JAVACALL_KEYPRESSED:JAVACALL_KEYRELEASED;
 		javanotify_key_event(-1, JAVACALL_KEYPRESSED);
-		
+
 		break;
-    default:  
+    default:
         return DefWindowProc(hWnd, message, wParam, lParam);
-    }  
-  
-    return 0;  
-}  
+    }
+
+    return 0;
+}
 
 static javacall_result init_window(void) {
 	HINSTANCE hInstance = GetModuleHandle(NULL);
-	WNDCLASSEX wcex;  
+	WNDCLASSEX wcex;
 
-    wcex.cbSize = sizeof(WNDCLASSEX);  
+    wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;  
-    wcex.cbClsExtra     = 0;  
-    wcex.cbWndExtra     = 0;  
-    wcex.hInstance      = hInstance;  
-    wcex.hIcon          = NULL;  
-    wcex.hCursor        = NULL;  
-    wcex.hbrBackground  = NULL;  
-    wcex.lpszMenuName   = NULL;  
-    wcex.lpszClassName  = "JOSHSCRCLS";  
-    wcex.hIconSm        = NULL;  
+    wcex.lpfnWndProc    = WndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = hInstance;
+    wcex.hIcon          = NULL;
+    wcex.hCursor        = NULL;
+    wcex.hbrBackground  = NULL;
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = "JOSHSCRCLS";
+    wcex.hIconSm        = NULL;
 
-    if (!RegisterClassEx(&wcex))  
+    if (!RegisterClassEx(&wcex))
     {
-        return JAVACALL_FAIL;  
-    }  
-	
-    HWND hWnd = CreateWindow(  
-        "JOSHSCRCLS",  
-        "EMUSCR",  
-        WS_OVERLAPPED,  
-        CW_USEDEFAULT, CW_USEDEFAULT,  
-<<<<<<< Updated upstream
-        256, 358,  
-=======
-        SCREEN_WIDTH+16, SCREEN_HEIGHT+58,  
->>>>>>> Stashed changes
-        NULL,  
-        NULL,  
-        hInstance,  
-        NULL  
-    );  
+        return JAVACALL_FAIL;
+    }
 
-    if (!hWnd)  
-    { 
+    HWND hWnd = CreateWindow(
+        "JOSHSCRCLS",
+        "EMUSCR",
+        WS_OVERLAPPED,
+        CW_USEDEFAULT, CW_USEDEFAULT,
+        SCREEN_WIDTH+16, SCREEN_HEIGHT+58,
+        NULL,  
+        NULL,
+        hInstance,
+        NULL
+    );
+
+    if (!hWnd)
+    {
     	return JAVACALL_FAIL;
-    }  
+    }
 
 	HDC hdc = GetDC(hWnd);
 	HDC hdcMem = CreateCompatibleDC(hdc);
 	hDefaultDisplayCanvas = CreateCompatibleBitmap(hdc, 240, 320);
     hbmOld = SelectObject(hdcMem, hDefaultDisplayCanvas);
 	ReleaseDC(hWnd, hdc);
-    ShowWindow(hWnd, SW_SHOWNORMAL);  
+    ShowWindow(hWnd, SW_SHOWNORMAL);
     UpdateWindow(hWnd);
 	hDefaultDisplayWnd = hWnd;
 	hDefaultDisplayHdc = hdcMem;
@@ -177,7 +168,7 @@ javacall_result javacall_directui_get_screen(int* screen_width, int* screen_heig
 	if (JAVACALL_OK != ensure_initialized()) {
 		return JAVACALL_FAIL;
 	}
-	
+
     *screen_width = 240;
     *screen_height = 320;
     return JAVACALL_OK;
@@ -211,7 +202,7 @@ javacall_result javacall_directui_flush_region(int xstart, int ystart, int xend,
 	scrrect.top = ystart;
 	scrrect.right = xend-1;
 	scrrect.left = yend-1;
-	
+
 	InvalidateRect(hDefaultDisplayWnd, &scrrect, FALSE);
 	return JAVACALL_OK;
 }
@@ -239,22 +230,22 @@ javacall_result javacall_directui_textout(int font, int color, int x, int y,
     if (JAVACALL_OK != ensure_initialized()) {
 		return JAVACALL_FAIL;
 	}
-	HFONT hFont, hOldFont; 
+	HFONT hFont, hOldFont;
 
 	hFont = CreateFont(font_h(font),font_w(font),0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
 	                CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY, VARIABLE_PITCH,NULL);
 
 
-	// Select the variable stock font into the specified device context. 
-	if (hOldFont = (HFONT)SelectObject(hDefaultDisplayHdc, hFont)) 
+	// Select the variable stock font into the specified device context.
+	if (hOldFont = (HFONT)SelectObject(hDefaultDisplayHdc, hFont))
 	{
 	    TextOutW(hDefaultDisplayHdc, x,y*8, text, textLen);
 
-	    // Restore the original font.        
-	    SelectObject(hDefaultDisplayHdc, hOldFont); 
+	    // Restore the original font.
+	    SelectObject(hDefaultDisplayHdc, hOldFont);
 	}
 	DeleteObject(hFont);
-	
+
 	wprintf(L"javacall_directui_textout: %s, x=%d, y=%d, textLen=%d, delayed=%d\n", text, x, y, textLen, delayed);
 	//if (!delayed) {
 		javacall_directui_flush();
@@ -278,7 +269,7 @@ static get_margin(int font) {
 
 static int get_char_width(int font, javacall_utf16 unicode) {
 	int size;
-	
+
 	if ((unicode >= 0x0100) && (unicode <= 0x01FF)) {
 		//PictureChar
 		size = 12;
@@ -302,18 +293,18 @@ static int get_char_width(int font, javacall_utf16 unicode) {
 
 javacall_result javacall_directui_text_getsize(int font, const javacall_utf16* text,
         int textLen, int* width, int* height) {
-	
+
 	int w = 0, i;
-	
+
     font = valid_font(font);
-	
+
 	for (i = 0; i < textLen; i++) {
 		w += get_char_width(font, text[i]);
 	}
-	
+
 	*width = w;
 	*height = font;
-	
+
 	return JAVACALL_OK;
 }
 #endif
@@ -342,7 +333,7 @@ javacall_result javacall_directui_image_getsize(javacall_uint8* image_data,
     		} else {
 				return JAVACALL_FAIL;
 			}
-			JPEG_To_RGB_free(info);			
+			JPEG_To_RGB_free(info);
 		} else {
 			return JAVACALL_FAIL;
 		}
@@ -360,7 +351,7 @@ javacall_result javacall_directui_drawimage(int x, int y, javacall_uint8* image_
 	if (JAVACALL_OK != ensure_initialized()) {
 		return JAVACALL_FAIL;
 	}
-	
+
     if (type == JAVACALL_IMAGETYPE_JPG) {
 		void *info = JPEG_To_RGB_init();
 		if (info) {
@@ -368,11 +359,11 @@ javacall_result javacall_directui_drawimage(int x, int y, javacall_uint8* image_
 			if (raw_image != NULL) {
 				unsigned char *p = raw_image;
 				for (int j = 0; j < h; j++) {
-					for (int i = 0; i < w; i++) {			
+					for (int i = 0; i < w; i++) {
 						unsigned int color = *(unsigned int*)p;
 						color = color & 0xffffff;
 						p += 3; //pixel size is set to 3 by jpeblib
-						
+
 						SetPixel(hDefaultDisplayHdc, x+i, y+j, color);
 					}
 				}
@@ -381,7 +372,7 @@ javacall_result javacall_directui_drawimage(int x, int y, javacall_uint8* image_
 				}
 				free(raw_image);
 			}
-			JPEG_To_RGB_free(info);			
+			JPEG_To_RGB_free(info);
 		} else {
 			return JAVACALL_FAIL;
 		}
@@ -397,10 +388,10 @@ javacall_result javacall_directui_drawrawdata(int x, int y, javacall_uint8* imag
 	if (JAVACALL_OK != ensure_initialized()) {
 		return JAVACALL_FAIL;
 	}
-	
+
     unsigned short *p = (unsigned short*)image_data;
 	for (int j = 0; j < h; j++) {
-		for (int i = 0; i < w; i++) {			
+		for (int i = 0; i < w; i++) {
 			SetPixel(hDefaultDisplayHdc, x+i, y+j, RGB16TORGB24(*p));
 			p++;
 		}
@@ -425,9 +416,9 @@ javacall_result javacall_directui_key_event_get(javacall_keypress_code* key, jav
 	}
 
 	printf("javacall_directui_key_event_get: _down_key=%d, _down_keyevent=%d\n", _down_key, _down_keyevent);
-	
+
 	*type = _down_keyevent;
-	
+
 	if (_down_key == -1) {
 		return JAVACALL_WOULD_BLOCK;
 	} else {

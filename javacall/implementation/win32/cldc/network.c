@@ -41,6 +41,7 @@
 #include "javacall_network.h"
 #include "javacall_socket.h"
 #include "javacall_datagram.h"
+#include "javacall_logging.h"
 
 #define WM_DEBUGGER      (WM_USER)
 #define WM_HOST_RESOLVED (WM_USER + 1)
@@ -50,8 +51,8 @@ static HWND hPhantomWindow = NULL;
 HWND getPhantomWindowHandle();
 
 #define MAX_HOST_LENGTH 256
-//#define ENABLE_NETWORK_TRACING
-//static char print_buffer[64];
+#define ENABLE_NETWORK_TRACING
+static char print_buffer[64];
 
 
 typedef struct _AddrContext {
@@ -158,6 +159,10 @@ javacall_result javacall_socket_connect_start(
 
     //memcpy(&addr.sin_addr, phostent->h_addr, phostent->h_length);
     memcpy((char*)&addr.sin_addr, (char*)ipBytes, 4);
+	if(WSAAsyncSelect(s, getPhantomWindowHandle(), WM_NETWORK, FD_CONNECT) != 0) {
+      	closesocket(s);
+    	return JAVACALL_FAIL;
+    }
 	status = connect(s, (struct sockaddr *)&addr, sizeof(addr));
     lastError = WSAGetLastError();
     
@@ -170,15 +175,11 @@ javacall_result javacall_socket_connect_start(
       * the handle.
       */
 
-     
+		
         return JAVACALL_OK;
     } /* end of connect() is OK */
 
     if (WSAEWOULDBLOCK == lastError) {
-        if(WSAAsyncSelect(s, getPhantomWindowHandle(), WM_NETWORK, FD_CONNECT) != 0) {
-        	closesocket(s);
-        	return JAVACALL_FAIL;
-        }
         return JAVACALL_WOULD_BLOCK;
     }
 

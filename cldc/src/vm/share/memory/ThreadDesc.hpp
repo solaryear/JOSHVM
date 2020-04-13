@@ -92,6 +92,9 @@ class ThreadDesc: public ThreadDescPointers {
   jint         _suspend_count;         // used by debugger code
   jint         _int1_value;            // for keeping return values
   jint         _int2_value;            // for keeping return values
+#if ENABLE_REALTIME
+  jint         _realtime_value;        // for realtime
+#endif
   
   friend class Thread;
   friend class Universe;

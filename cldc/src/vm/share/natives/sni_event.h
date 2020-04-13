@@ -59,7 +59,8 @@ typedef enum SNIsignalType {
     GPIO_PIN_INPUT_SIGNAL,
     KEY_SIGNAL,
     BN_CALC_COMP_SIGNAL,
-    JDEVFS_IOCTL_SIGNAL
+    JDEVFS_IOCTL_SIGNAL,
+    RT_EVENT_SIGNAL,
 } SNIsignalType;
 
 /**

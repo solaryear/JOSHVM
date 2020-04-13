@@ -156,6 +156,18 @@ int Scheduler::live_thread_count_for_task(int task_id) {
 #if ENABLE_ISOLATES || !defined(PRODUCT)
 bool Scheduler::is_in_some_active_queue(Thread* thread) {
   Task::Raw task;
+#if ENABLE_REALTIME
+  Thread::Raw realtime_thread = Universe::realtime_threadlist();
+  Thread::Raw realtime_last = realtime_thread;
+  if (realtime_thread.not_null()) {
+    do {
+      if (realtime_thread.equals(thread)) {
+        return true;
+      }
+      realtime_thread = realtime_thread().next();
+    } while (!realtime_thread.equals(realtime_last));
+  }
+#endif
 #if ENABLE_ISOLATES
   for (int task_id = Task::FIRST_TASK; task_id < MAX_TASKS; task_id++) {
     task = Task::get_task(task_id);
@@ -311,9 +323,43 @@ void Scheduler::adjust_priority_list(Thread *thread, bool is_add) {
   }
 }
 
+#if ENABLE_REALTIME
+void Scheduler::adjust_realtime_list(Thread *thread, bool is_add) {
+  Thread* thread_list = Universe::realtime_threadlist();
+  if (is_add) {
+    add_to_list(thread, thread_list);
+    if (TraceThreadsExcessive) {
+      TTY_TRACE_CR(("add: thread 0x%x (id=%d) to realtime list",
+          thread->obj(), thread->id()));
+    }
+  } else {
+    if (TraceThreadsExcessive) {
+      TTY_TRACE_CR(("remove: thread 0x%x (id=%d) from realtime list",
+          thread->obj(), thread->id()));
+    }
+    remove_from_list(thread, thread_list);
+
+    if (thread->equals(_next_runnable_thread)) {
+      _next_runnable_thread = thread_list->obj();
+      if (TraceThreadsExcessive) {
+        TTY_TRACE_CR(("adjust: realtime _next_runnable_thread 0x%x (id=%d)",
+            _next_runnable_thread,
+            (_next_runnable_thread ? thread_list->id() : -1)));
+      }
+    }
+  }
+}
+#endif
+
 void Scheduler::add_to_active(Thread* thread) {
 #if ENABLE_JAVA_DEBUGGER
   thread->set_active();
+#endif
+#if ENABLE_REALTIME
+  if (thread->realtime_value()) {
+    adjust_realtime_list(thread, true);
+    return;
+  }
 #endif
   adjust_priority_list(thread, true);
 }
@@ -321,6 +367,12 @@ void Scheduler::add_to_active(Thread* thread) {
 void Scheduler::remove_from_active(Thread* thread) {
 #if ENABLE_JAVA_DEBUGGER
   thread->set_suspended();
+#endif
+#if ENABLE_REALTIME
+  if (thread->realtime_value()) {
+    adjust_realtime_list(thread, false);
+    return;
+  }
 #endif
   adjust_priority_list(thread, false);
 }
@@ -462,6 +514,43 @@ ReturnOop Scheduler::add_waiting_thread(Thread *thread, JavaOop *obj) {
   } else {
     GUARANTEE(obj->equals(pending_waiters().wait_obj()),
               "Wait objects not equal");
+#if ENABLE_REALTIME
+    if (thread->realtime_value()) {
+      Thread::Raw prev;
+      Thread::Raw current = pending_waiters;
+      while (current.not_null() && current().realtime_value()) {
+        prev = current;
+        current = current().next();
+      }
+      if (prev.is_null()) {
+        // insert to head
+        Thread::Raw prev_wait_head = Universe::scheduler_waiting();
+        Thread::Raw next_wait_head = prev_wait_head().next_waiting();
+        while (!next_wait_head().equals(&pending_waiters)) {
+          prev_wait_head = next_wait_head;
+          next_wait_head = next_wait_head().next_waiting();
+        }
+        next_wait_head = pending_waiters().next_waiting();
+        prev_wait_head().set_next_waiting(thread);
+        thread->set_next_waiting(&next_wait_head);
+        thread->set_next(&pending_waiters);
+
+        Thread* wait_queue = Universe::scheduler_waiting();
+        Thread::Raw tail = wait_queue->global_next();
+        if (tail.equals(&pending_waiters)) {
+          wait_queue->set_global_next(thread);
+        }
+        pending_waiters = thread;
+      } else {
+        // first thread is a realtime thread
+        prev().set_next(thread);
+        thread->set_next(&current);
+        thread->clear_next_waiting();
+      }
+      thread->set_wait_obj(obj);
+      return pending_waiters;
+    }
+#endif
     //    thread->set_next(&pending_waiters);
     Thread::Raw tail = pending_waiters;
     while (tail().next() != NULL) {
@@ -482,6 +571,24 @@ ReturnOop Scheduler::add_sync_thread(Thread* thread, Thread *pending_waiters,
     pending_waiters = thread;
     thread->clear_next();
   } else {
+#if ENABLE_REALTIME
+    if (thread->realtime_value()) {
+      Thread::Raw prev;
+      Thread::Raw current = pending_waiters;
+      while (current.not_null() && current().realtime_value()) {
+        prev = current;
+        current = current().next_waiting();
+      }
+      if (prev.is_null()) {
+        pending_waiters = thread;
+      } else {
+        prev().set_next_waiting(thread);
+      }
+      thread->set_next_waiting(&current);
+      thread->set_wait_obj(obj);
+      return pending_waiters->obj();
+    }
+#endif
     Thread::Raw tail = pending_waiters;
     while (tail().next_waiting() != NULL) {
       tail = tail().next_waiting();
@@ -801,6 +908,11 @@ void Scheduler::terminate(Thread* thread JVM_TRAPS) {
       // This is the last thread of a task. So we can clean up.
       ObjectHeap::finalize_task( tid );
       oa().obj_at_clear(thread->priority());
+#if ENABLE_REALTIME
+      if (thread->realtime_value()) {
+        remove_from_active(thread);
+      }
+#endif
       Task::clear_priority_queue_valid(tid, thread->priority());
       // At this point (thread == _current_thread), so it will be
       // scanned by GC. The thread object may be a class loaded by the
@@ -863,6 +975,11 @@ void Scheduler::terminate_all() {
       for (int i = 0; i <= ThreadObj::NUM_PRIORITY_SLOTS; i++) {
         pq().obj_at_clear(i);
       }
+#if ENABLE_REALTIME
+      if (thread->realtime_value()) {
+        continue;
+      }
+#endif
       if (task_id == thread_task_id) {
         pq().obj_at_put(priority, thread);
       }
@@ -873,16 +990,34 @@ void Scheduler::terminate_all() {
     for (int i = 0; i <= ThreadObj::NUM_PRIORITY_SLOTS; i++) {
       pq->obj_at_clear(i);
     }
+#if ENABLE_REALTIME
+    if (!thread->realtime_value()) {
+#endif
     pq->obj_at_put(priority, thread);
+#if ENABLE_REALTIME
+    }
+#endif
+#endif
+#if ENABLE_REALTIME
+    if (!thread->realtime_value()) {
 #endif
     set_priority_valid(thread, priority);
-  } 
+#if ENABLE_REALTIME
+    }
+#endif
+  }
 
   // We can't create handles here ...
   Thread *thread = Thread::current();
   thread->set_next(thread);
   thread->set_previous(thread);
   _next_runnable_thread = NULL;
+
+#if ENABLE_REALTIME
+  if (thread->realtime_value()) {
+    *Universe::realtime_threadlist() = *thread;
+  }
+#endif
 
   if (!Universe::scheduler_async()->is_null()) {
     //tty->print_cr("warning: async threads still active!");
@@ -1749,6 +1884,24 @@ void Scheduler::print() {
   tty->print_cr("Active threads:");
   Thread::Raw t, thread_list, last;
   Task::Raw task;
+#if ENABLE_REALTIME
+  thread_list = Universe::realtime_threadlist();
+  if (thread_list.not_null()) {
+    t = thread_list;
+    last = t;
+    do {
+      tty->print("  [realtime] ");
+      t().print_value();
+      if (t.equals(Thread::current())) {
+        tty->print(" (*** current *** )");
+      } else {
+        tty->print(" (ready)");
+      }
+      tty->cr();
+      t = t().next();
+    } while (!t.equals(&last));
+  }
+#endif
 #if ENABLE_ISOLATES
   for (int task_id = Task::FIRST_TASK; task_id < MAX_TASKS; task_id++) {
     task = Task::get_task(task_id);
@@ -1811,7 +1964,7 @@ void Scheduler::print() {
   while (!wt.is_null()) {
     thrd = wt.obj();
     while (!thrd.is_null()) {
-      if (wt.equals(&wt_start)) {
+      if (thrd.equals(&wt_start)) {
         // 'fake' scheduler_waiting thread, skip it
         thrd = thrd().next();
         continue;
@@ -2162,6 +2315,19 @@ Thread *Scheduler::get_next_runnable_thread(Thread *starting_thread) {
     // we don't charge this task since that occured when we yielded
     return (Thread *)&_next_runnable_thread;
   }
+
+#if ENABLE_REALTIME
+  thread = Universe::realtime_threadlist();
+  if (thread.not_null()) {
+    if (is_yield) {
+      thread = thread().next();
+    }
+    *Universe::realtime_threadlist() = thread;
+    _next_runnable_thread = thread.obj();
+    return (Thread *)&_next_runnable_thread;
+  }
+#endif
+
 #if ENABLE_ISOLATES
   do {
     int start_tid;

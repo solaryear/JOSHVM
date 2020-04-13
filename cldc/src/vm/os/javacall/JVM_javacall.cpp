@@ -477,3 +477,16 @@ extern "C" void javanotify_security_event(void* handle) {
 #endif
 
 
+#if ENABLE_REALTIME
+#include "javacall_realtime.h"
+
+extern "C" void javanotify_realtime_event(const javacall_handle handle) {
+    SNIReentryData rd;
+
+    rd.status = 0;
+    rd.descriptor = (int)handle;
+    rd.pContext = (void*)0;
+    rd.waitingFor = RT_EVENT_SIGNAL;
+    javacall_event_send((unsigned char*)&rd, sizeof(SNIReentryData));
+}
+#endif

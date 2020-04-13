@@ -39,6 +39,7 @@ JSR_75_JC_DIR=jsr75_fc
 DIO_JC_DIR=dio
 CELLULAR_JC_DIR=cellular
 DIRECTUI_JC_DIR=directui
+REALTIME_JC_DIR=realtime
 NATIVE_AMS_JC_DIR=nams
 SECURITY_JC_DIR=security
 TEST_JC_DIR=test

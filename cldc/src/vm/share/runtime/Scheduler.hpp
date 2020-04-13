@@ -70,6 +70,9 @@ private:
   static ReturnOop check_debug_state(Thread *, bool);
 
   static void adjust_priority_list(Thread *thread, bool is_add);
+#if ENABLE_REALTIME
+  static void adjust_realtime_list(Thread *thread, bool is_add);
+#endif
   static void set_priority_valid(Thread *thread, int priority) {
 #if ENABLE_ISOLATES
     Task::set_priority_queue_valid(thread->task_id(), priority);

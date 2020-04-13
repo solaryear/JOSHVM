@@ -152,6 +152,12 @@ class Thread: public Oop {
   }
 #endif
 
+#if ENABLE_REALTIME
+  static jint realtime_value_offset() {
+    return FIELD_OFFSET(ThreadDesc, _realtime_value);
+  }
+#endif
+
   static const address lowest_stack_value;
 
   static ReturnOop allocate(JVM_SINGLE_ARG_TRAPS);
@@ -553,6 +559,16 @@ class Thread: public Oop {
     obj_field_put(local_references_offset(), value);
   }
 
+#endif
+
+#if ENABLE_REALTIME
+  int realtime_value() const {
+    return int_field(realtime_value_offset());
+  }
+
+  void set_realtime_value(int value) {
+    int_field_put(realtime_value_offset(), value);
+  }
 #endif
 
 #if ENABLE_CLDC_11

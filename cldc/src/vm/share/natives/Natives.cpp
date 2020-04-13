@@ -1119,8 +1119,7 @@ void Java_java_lang_Thread_sleep(JVM_SINGLE_ARG_TRAPS) {
   }
 }
 
-// private native void start0();
-void Java_java_lang_Thread_start0(JVM_SINGLE_ARG_TRAPS) {
+static void start_thread(int realtime JVM_TRAPS) {
   UsingFastOops fast_oops;
   ThreadObj::Fast receiver = GET_PARAMETER_AS_OOP(0);
   if (!receiver().is_unstarted()) {
@@ -1129,6 +1128,9 @@ void Java_java_lang_Thread_start0(JVM_SINGLE_ARG_TRAPS) {
   receiver().set_stillborn();
   Thread::Fast new_thread = Thread::allocate(JVM_SINGLE_ARG_CHECK);
   new_thread().set_thread_obj(&receiver);
+#if ENABLE_REALTIME
+  new_thread().set_realtime_value(realtime);
+#endif
 #if ENABLE_ISOLATES
   {
     UsingFastOops fast_oops_inside;
@@ -1148,6 +1150,17 @@ void Java_java_lang_Thread_start0(JVM_SINGLE_ARG_TRAPS) {
   new_thread().start(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
 #endif
 }
+
+// private native void start0();
+void Java_java_lang_Thread_start0(JVM_SINGLE_ARG_TRAPS) {
+  start_thread(0 JVM_CHECK);
+}
+
+#if ENABLE_REALTIME
+void Java_org_joshvm_realtime_RealtimeThread_start0(JVM_SINGLE_ARG_TRAPS) {
+  start_thread(1 JVM_CHECK);
+}
+#endif
 
 // private synchronized native void internalExit();
 void Java_java_lang_Thread_internalExit() {

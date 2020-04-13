@@ -442,6 +442,7 @@ private:
   template(system_mirror_list,                   ObjArray)            \
   template(current_task_obj,                     Task)                \
   template(scheduler_waiting,                    Thread)              \
+  template(realtime_threadlist,                  Thread)              \
   template(global_threadlist,                    Thread)
 
   // ^^^^^^^NOTE: last NUM_HANDLES_SKIP handles must be

@@ -186,6 +186,10 @@ ifeq ($(ENABLE_DIRECTUI), true)
 include $(DIRECTUI_DIR)/makefiles/vm_module.make
 endif
 
+ifeq ($(ENABLE_REALTIME), true)
+include $(REALTIME_DIR)/makefiles/vm_module.make
+endif
+
 include $(LOGGING_UTIL_DIR)/makefiles/vm_module.make
 
 ifeq ($(ENABLE_SECURITY), true)
@@ -329,6 +333,11 @@ endif
 ifeq ($(ENABLE_DIRECTUI), true)
 Obj_Files           +=         $(DIRECTUI_Obj_Files)
 ENABLE_CFLAGS       +=         -DENABLE_DIRECTUI
+endif
+
+ifeq ($(ENABLE_REALTIME), true)
+Obj_Files           +=         $(REALTIME_Obj_Files)
+ENABLE_CFLAGS       +=         -DENABLE_REALTIME
 endif
 
 ifeq ($(ENABLE_SECURITY), true)

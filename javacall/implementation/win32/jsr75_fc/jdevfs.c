@@ -67,7 +67,7 @@ javacall_result javacall_jdevfs_open(const javacall_utf16*  unicodeFileName,
 	
 	memcpy(wOsFilename, unicodeFileName, fileNameLen*sizeof(wchar_t));
 	wOsFilename[fileNameLen] = 0;
-	wprintf(L"javacall_jdevfs_open: %s\n", wOsFilename);
+	fwprintf(stderr, L"javacall_jdevfs_open: %s\n", wOsFilename);
 
 	javacall_handle h;
 	if (JAVACALL_OK != getDeviceByDevName(wOsFilename, &item)) {
@@ -76,15 +76,15 @@ javacall_result javacall_jdevfs_open(const javacall_utf16*  unicodeFileName,
 	}
 
 	{
-		printf("opening as regular file...");
+		fprintf(stderr, "opening as regular file...");
 		//Should be open as regular file
 		char* fn = item.fname;
 		if (fn == NULL) {
-			printf("failed\n");
+			fprintf(stderr, "failed\n");
 			return JAVACALL_FAIL;
 		}
 
-		printf(" %s\n", fn);
+		fprintf(stderr, " %s\n", fn);
 		
 	    fd = _open(fn, O_RDWR | O_CREAT, _S_IREAD | _S_IWRITE);
 

@@ -26,6 +26,8 @@ import javax.microedition.io.*;
 import java.io.*;
 import smartps.jdevfs.ioctl.IOCtrlArguments;
 import smartps.jdevfs.DeviceNotSupportException;
+import com.sun.midp.log.LogChannels;
+import com.sun.midp.log.Logging;
 
 public class DevfsNetworkEMUHandler implements smartps.jdevfs.DevfsOpsHandler {
 	private final static int interval = 200; //poll() sleep interval in ms
@@ -36,58 +38,78 @@ public class DevfsNetworkEMUHandler implements smartps.jdevfs.DevfsOpsHandler {
 	private DataInputStream ioctlin = null;
 	private DataOutputStream ioctlout = null;
 	private StreamConnection ioctlconnection = null;
+	private boolean isPollSupported = false;
 
 	protected void connect(String ip, int port) throws IOException {
 		connection = (StreamConnection)Connector.open("socket://"+ip+":"+port);
-		System.out.println("Open Input...");
 		in = connection.openInputStream();
-		System.out.println("Open Output...");
 		out = connection.openOutputStream();
-		System.out.println("Connected to emu port "+ port);
+		Logging.report(Logging.INFORMATION, LogChannels.LC_FC, "Connected to emu port "+ port);
 	}
 
 	protected void ioctlconnect(String ip, int ioctlport) throws IOException {
 		ioctlconnection = (StreamConnection)Connector.open("socket://"+ip+":"+ioctlport);
-		System.out.println("Open IOCTLInput...");
-		ioctlin = connection.openDataInputStream();
-		System.out.println("Open IOCTLOutput...");
-		ioctlout = connection.openDataOutputStream();
-		System.out.println("Connected to emu ioctl port "+ioctlport);
+		ioctlin = ioctlconnection.openDataInputStream();
+		ioctlout = ioctlconnection.openDataOutputStream();
+		Logging.report(Logging.INFORMATION, LogChannels.LC_FC, "Connected to emu ioctl port "+ioctlport);
 	}
 	
 	public int read(byte b[], int off, int len) throws IOException {
+		if (in == null) {
+			throw new IOException("Not supported operation");
+		}
 		return in.read(b, off, len);
 	}
 
 	public void open(String devName, int mode) throws IOException, DeviceNotSupportException {
 		int port,ioctlport;
-		System.out.println("DevfsNetworkEMUHandler open..."+devName);
+		
+		Logging.report(Logging.INFORMATION, LogChannels.LC_FC, "DevfsNetworkEMUHandler open..."+devName);
+		
 		if (devName.equals("/dev/METER")) {
 			port = 9977;
 			ioctlport = -1;
 		} else if (devName.equals("/dev/POWER_D")) {
 			port = 9979;
 			ioctlport = -1;
+			isPollSupported = true;
 		} else if (devName.equals("/dev/PULSE_CH")) {
-			port = 9981;
+			port = -1;
 			ioctlport = 9982;
+		} else if (devName.equals("/dev/UL_URT")) {
+			port = 9983;
+			ioctlport = 9984;
+			isPollSupported = true;
+		} else if (devName.equals("/dev/EXT1_URT")) {
+			port = 9985;
+			ioctlport = 9986;
+			isPollSupported = true;
+		} else if (devName.equals("/dev/BLE_URT")) {
+			port = 9987;
+			ioctlport = 9988;
+			isPollSupported = true;
 		} else {
 			throw new DeviceNotSupportException(devName);
 		}
 		
-		connect("127.0.0.1", port);
+		if (port > 0) {
+			connect("127.0.0.1", port);
+		}
+		
 		if (ioctlport > 0) {
 			ioctlconnect("127.0.0.1", ioctlport);
 		}
 	}
 	
 	public int write(byte b[], int off, int len) throws IOException {
+		if (out == null) {
+			throw new IOException("Not supported operation");
+		}
 		out.write(b, off, len);
 		return len;
 	}
 	
 	public void close() throws IOException {
-		System.out.println("Closing connection to EMU");
 		if (in != null) {
 			in.close();
 			in = null;
@@ -102,6 +124,18 @@ public class DevfsNetworkEMUHandler implements smartps.jdevfs.DevfsOpsHandler {
 		}
 	}
 	public void ioctl(int cmd, IOCtrlArguments arg) throws IOException {
+		if (ioctlconnection == null) {
+			throw new IOException("Not supported operation");
+		}
+
+		if (ioctlin != null) {
+			int aval = ioctlin.available();
+			if (aval > 0) {
+				//purge all the data existing in ioctlin stream before sending ioctl command
+				read(new byte[aval], 0, aval);
+			}
+		}
+		
 		if (ioctlout != null) {
 			ioctlout.writeInt(cmd);
 			ioctlout.write(arg.asByteArray());
@@ -109,9 +143,13 @@ public class DevfsNetworkEMUHandler implements smartps.jdevfs.DevfsOpsHandler {
 		if (ioctlin != null) {
 			int respcode = ioctlin.readInt();
 			if (respcode < 0) {
-				throw new IOException("ioctl operation failed: "+respcode);
+				throw new IOException("ioctl operation failed with respcode: "+respcode);
+			}
+			if (respcode > arg.asByteArray().length) {
+				throw new IOException("ioctl operation failed with too long return message length: "+respcode);
 			}
 			int readlen = 0;
+
 			while (respcode > readlen) {
 				readlen += ioctlin.read(arg.asByteArray(), readlen, respcode - readlen);
 			}
@@ -139,7 +177,23 @@ public class DevfsNetworkEMUHandler implements smartps.jdevfs.DevfsOpsHandler {
 	}
 	
 	public boolean poll() throws IOException {
-		return in.available() > 0?true:false;
+		if (!isPollSupported || (in == null && ioctlin == null)) {
+			throw new IOException("Not supported operation");
+		}
+
+		if (in != null) {
+			if (in.available() > 0) {
+				return true;
+			}
+		}
+
+		if (ioctlin != null) {
+			if (ioctlin.available() > 0) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 	
 	public long lseek(long offset, int whence) throws IOException {

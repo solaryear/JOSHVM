@@ -33,6 +33,7 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
 #include <io.h>
 #include <fcntl.h>
 #include <string.h>
@@ -43,7 +44,8 @@ extern "C" {
 #include "javacall_logging.h"
 #include "javacall_jdevfs.h"
 
-#define DEBUG_PRINT(x) printf(x)
+//#define DEBUG_PRINT(x) fprintf(stderr, x)
+#define DEBUG_PRINT(x)
 #define MAX_NULL_TERMINATED_NAME_LENGTH (JAVACALL_MAX_FILE_NAME_LENGTH + 1)
 
 static int stringlastindexof(unsigned short *str,

@@ -22,20 +22,30 @@
 package smartps.jdevfs.ioctl;
 
 import org.joshvm.util.ByteBuffer;
+import smartps.jdevfs.ioctl.arguments.NullArgument;
 
 public abstract class IOCtrlArguments {
-	private ByteBuffer argbuf;
+	protected ByteBuffer argbuf;
 
 	private final static byte TYPE_BYTE = 0;
 	private final static byte TYPE_INT = 1;
 	private final static byte TYPE_BUF = 2;
+
+	private final static NullArgument nullArgument;
+
+	static {
+		nullArgument = new NullArgument();
+	}
 	
 	protected IOCtrlArguments(int size) {
 		argbuf = ByteBuffer.allocateDirect(size);
 	}
 	
-	public static IOCtrlArguments create(String type) {
+	public final static IOCtrlArguments create(String type) {
 		try {
+			if (type == null) {
+				return nullArgument;
+			}
 			return (IOCtrlArguments)Class.forName("smartps.jdevfs.ioctl.arguments."+type).newInstance();
 		} catch (InstantiationException ie) {
 			throw new IllegalArgumentException("IOCtrlArguments instant can't be created: "+type);
@@ -47,36 +57,27 @@ public abstract class IOCtrlArguments {
 	}
 	
 	protected void putInt(int arg) {
-		argbuf.put(TYPE_INT);
 		argbuf.putInt(arg);
 	}
 	protected void putByte(byte arg) {
-		argbuf.put(TYPE_BYTE);
 		argbuf.put(arg);
 	}
 	protected void putByteBuffer(ByteBuffer arg) {
-		argbuf.put(TYPE_BUF);
-		argbuf.put((byte)(arg.remaining()&0xff));
 		argbuf.put(arg);
 	}
 	
-	protected Object get() throws NumberFormatException {
-		byte type = argbuf.get();
-		
-		if (type == TYPE_INT) {
-			return new Integer(argbuf.getInt());
-		}
-		if (type == TYPE_BYTE) {
-			return new Byte(argbuf.get());
-		}
-		if (type == TYPE_BUF) {
-			byte len = argbuf.get();
-			byte[] buf = new byte[len&0xff];
-			argbuf.get(buf);
-			return new ByteBuffer(buf);
-		}
+	protected int getInt() {
+		return argbuf.getInt();
+	}
 
-		throw new NumberFormatException("Unknown type");
+	protected byte getByte() {
+		return argbuf.get();
+	}
+
+	protected ByteBuffer getByteBuffer(int size) {
+		ByteBuffer result = argbuf.slice();
+		result.limit(size);
+		return result;
 	}
 	
 	public byte[] asByteArray() {

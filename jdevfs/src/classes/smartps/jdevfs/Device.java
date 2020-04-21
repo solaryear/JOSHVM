@@ -38,6 +38,12 @@ public class Device {
 	
 	private DevfsOpsHandler filehandle;
 
+	/**
+	 * Constructor of Device with specified driver's class name.
+	 *
+     * @param driverName currently uses null as most case
+     * @throww DriverNotFoundException if the driverName specified driver is not found
+     */
 	public Device(String driverName) throws DriverNotFoundException {
 		filehandle = loadDriver(driverName);
 	}
@@ -63,7 +69,14 @@ public class Device {
 			
 		throw new DriverNotFoundException(reason);
 	}
-	
+
+	/**
+	 * Open device.
+     * @param devName the name of device, e.g. "/dev/METER"
+     * @param mode Device.READ_ONLY, Device.WRITE_ONLY, Device.READ_WRITE
+     * @throws IOException if any error occurs.
+     * @throww DriverNotFoundException if devName is not found
+     */
 	public void open(String devName, int mode) throws IOException {
 		try {
 			if (filehandle == null) {
@@ -109,22 +122,62 @@ public class Device {
 		return filehandle.write(b, off, len);
 	}
 
+	
+	/**
+	 * Close the device
+	 * @throws IOException if any error occurs.
+	 */
 	public void close() throws IOException {
 		filehandle.close();
 	}
 
+	
+	/**
+	 * Send ioctl command to the dev file.
+	 * @param cmd is the command to send to ioctl
+	 * @param arg is the argument to ioctl. If there's no argument for
+	 *		  the operation, use NullArgument which is created by
+	 *		  IOCtrlArguments.create(null)
+	 * @return length of data really written
+	 * @throws IOException if any error occurs.
+	 */
 	public void ioctl(int cmd, IOCtrlArguments arg) throws IOException {
 		filehandle.ioctl(cmd, arg);
 	}
+
 	
+	/**
+	 * Check if there's any incoming data package available. If there's
+	 * not any available, wait for timeout milliseconds
+	 *
+	 * @return true if available, false not
+	 * @throws IOException if any error occurs.
+	 */
 	public boolean poll(int timeout) throws IOException {
 		return filehandle.poll(timeout);
 	}
 
+	
+	/**
+	 * Check if there's any incoming data package available
+	 *
+	 * @return true if available, false not
+	 * @throws IOException if any error occurs.
+	 */
 	public boolean poll() throws IOException {
 		return filehandle.poll();
 	}
+
 	
+	/**
+	 * Move current file access position
+	 * @param offset the position to seek
+	 * @param whence SEEK_SET: offset from beginning; 
+	 *				 SEEK_CUR: to current position; 
+	 *				 SEEK_END: offset from the end
+	 * @return the position after seeking
+	 * @throws IOException if any error occurs.
+	 */
 	public long lseek(long offset, int whence) throws IOException {
 		return filehandle.lseek(offset, whence);
 	}

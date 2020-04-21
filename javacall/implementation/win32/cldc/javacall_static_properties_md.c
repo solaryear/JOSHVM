@@ -24,10 +24,14 @@
 static char* javacall_static_properties_application_md_keys[] = {
     "smartps.jdevfs.drivers.METER",
 	"smartps.jdevfs.drivers.POWER_D",
+	"smartps.jdevfs.drivers.PULSE_CH",
+	"smartps.jdevfs.drivers.UL_URT",
 	NULL
 };
 
 static char* javacall_static_properties_application_md_values[] = {
+	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
+	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
 	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
 	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
     NULL
@@ -35,11 +39,13 @@ static char* javacall_static_properties_application_md_values[] = {
 
 
 static char* javacall_static_properties_internal_md_keys[] = {
+	"logging.level.channel.FC",
     NULL
 };
 
 
 static char* javacall_static_properties_internal_md_values[] = {
+	"0",
     NULL
 };
 

@@ -58,7 +58,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         break;
 	case WM_KEYDOWN:
 	case WM_KEYUP:
-		javacall_printf("CHAR %c\n", wParam);
 		if ((wParam >= 0x30) && (wParam <= 0x39)) {
 			_down_key = wParam;
 		} else if (wParam == VK_F1) {
@@ -415,8 +414,6 @@ javacall_result javacall_directui_key_event_get(javacall_keypress_code* key, jav
 	if (JAVACALL_OK != ensure_initialized()) {
 		return JAVACALL_FAIL;
 	}
-
-	printf("javacall_directui_key_event_get: _down_key=%d, _down_keyevent=%d\n", _down_key, _down_keyevent);
 
 	*type = _down_keyevent;
 

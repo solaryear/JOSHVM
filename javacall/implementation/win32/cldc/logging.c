@@ -111,8 +111,9 @@ void javacall_logging_printf(int severity, javacall_logging_channel channelID, c
 
 void javacall_logging_vprintf(int severity, javacall_logging_channel channelID, const char *format, va_list args) {
 	if (JAVACALL_REPORT_LEVEL <= severity) {
-		javacall_printf(JAVACALL_LOGGING_HEADER, severity, channelID);
-		javacall_vprintf(format, args);
+		fprintf(stderr, JAVACALL_LOGGING_HEADER, severity, channelID);
+		vfprintf(stderr, format, args);
+		fprintf(stderr, "\n");
 	}
 }
 

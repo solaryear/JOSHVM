@@ -131,7 +131,9 @@ int get_allowed_severity_c(int channelID) {
             return(getInternalPropertyInt("logging.level.channel.SOCKET"));
         case LC_SECURITY:
             return(getInternalPropertyInt("logging.level.channel.SECURITY"));
-        
+        case LC_FC:
+	        return(getInternalPropertyInt("logging.level.channel.FC"));
+			
         default: 
             return(LOG_DISABLED);
     }
@@ -182,9 +184,9 @@ reportToLog(int severity, int channelID, const char* message, ...) {
 		va_start(ap, message);
 		javacall_logging_vprintf(severity, (javacall_logging_channel)channelID, message, ap);
 		va_end(ap);
-        if (javacall_logging_getLevel() <= severity) {
-            javacall_print("\n");
-        }
+        //if (javacall_logging_getLevel() <= severity) {
+        //    javacall_logging_printf(severity, (javacall_logging_channel)channelID, "\n");
+        //}
     }
 }
 

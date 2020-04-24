@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
 #define JAVACALL_LOGGING_HEADER "JC:<level:%d><channel:%d> "
-#define JAVACALL_REPORT_LEVEL_DEFAULT JAVACALL_LOGGING_INFORMATION
+#define JAVACALL_REPORT_LEVEL_DEFAULT JAVACALL_LOGGING_CRITICAL
 
 #define javacall_logging_printf		javacall_logging_printf_nodebug
 #define javacall_logging_vprintf	javacall_logging_vprintf_nodebug

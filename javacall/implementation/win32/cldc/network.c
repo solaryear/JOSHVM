@@ -51,7 +51,7 @@ static HWND hPhantomWindow = NULL;
 HWND getPhantomWindowHandle();
 
 #define MAX_HOST_LENGTH 256
-#define ENABLE_NETWORK_TRACING
+//#define ENABLE_NETWORK_TRACING
 static char print_buffer[64];
 
 

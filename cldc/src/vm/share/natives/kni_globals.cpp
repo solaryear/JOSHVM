@@ -52,6 +52,8 @@ const char* const KNIClassNotFoundException = "java/lang/ClassNotFoundException"
 const char* const KNIIOException = "java/io/IOException";
 /** 'C' string for java.io.InterruptedIOException */
 const char* const KNIInterruptedIOException = "java/io/InterruptedIOException";
+/** 'C' string for java.lang.InterruptedException */
+const char* const KNIInterruptedException = "java/lang/InterruptedException";
 /** 'C' string for javax.microedition.io.ConnectionNotFoundException */
 const char* const KNIConnectionNotFoundException = "javax/microedition/io/ConnectionNotFoundException";
 /** 'C' string for org.joshvm.j2me.dio.InvalidDeviceConfigException */

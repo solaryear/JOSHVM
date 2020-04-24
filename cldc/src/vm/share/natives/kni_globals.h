@@ -104,6 +104,11 @@ extern const char* const KNIIOException;
 extern const char* const KNIInterruptedIOException;
 
 /**
+ * 'C' string for java.lang.InterruptedException.
+ */
+extern const char* const KNIInterruptedException;
+
+/**
  * 'C' string for javax.microedition.io.ConnectionNotFoundException.
  */
 extern const char* const KNIConnectionNotFoundException;

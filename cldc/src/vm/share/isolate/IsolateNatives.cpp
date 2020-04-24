@@ -27,6 +27,9 @@
 #include "incls/_precompiled.incl"
 #include "incls/_IsolateNatives.cpp.incl"
 
+#include "sni.h"
+#include "sni_event.h"
+
 extern "C" {
 
 /*----------------------------------------------------------------
@@ -350,6 +353,28 @@ Java_com_sun_cldc_isolate_Isolate_isDebuggerConnected(JVM_SINGLE_ARG_TRAPS) {
 #else
   return false;
 #endif
+}
+
+void Java_com_sun_cldc_isolate_InterIsolateEvent_sendEvent() {
+  const jint sendtoID = KNI_GetParameterAsInt(1);
+  const jint value = KNI_GetParameterAsInt(2);
+  
+  SNIEVT_signal(INTER_ISOLATE_COMMUNICATION_SIGNAL, sendtoID, value);
+  return;
+}
+
+jint Java_com_sun_cldc_isolate_InterIsolateEvent_waitEvent() {
+  jint value;
+  const jint waitonID = KNI_GetParameterAsInt(1);
+
+  SNIReentryData* info = (SNIReentryData*)SNI_GetReentryData(NULL);
+  value = 0;
+  if (info != NULL) {
+  	value = info->status;
+  } else {
+  	SNIEVT_wait(INTER_ISOLATE_COMMUNICATION_SIGNAL, waitonID, NULL);	
+  }
+  return value;
 }
 
 } // extern "C"

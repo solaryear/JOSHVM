@@ -3264,3 +3264,7 @@ SoftRefArray.hpp                Array.hpp
 SoftRefArray.cpp                ObjectHeap.hpp
 SoftRefArray.cpp                Universe.hpp
 SoftRefArray.cpp                SoftRefArray.hpp
+
+ipcbridge.cpp					ipcbridge.hpp
+ipcbridge.cpp					kni.h
+ipcbridge.cpp					kni_globals.h

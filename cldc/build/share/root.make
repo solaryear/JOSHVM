@@ -723,7 +723,7 @@ CLDC_BUILD_CLASSES_PATH := $(JVMWorkSpace)/build/classes
 
 doc_all : $(JAVADOC_OUTPUT_DIR)
 	$(JDK_DIR)/bin/jar -cf $(JVMWorkSpace)/build/josh_api.jar $(foreach dir,$(subst .,/,$(DOC_PACKAGES)), -C $(CLDC_BUILD_CLASSES_PATH) $(dir))
-	$(JDK_DIR)/bin/javadoc -locale en_US -encoding UTF-8 -charset UTF-8 -windowtitle "JOSH API Document" -d `cygpath -p -w "$(JAVADOC_OUTPUT_DIR)"` -sourcepath `cygpath -p -w "$(DOC_SOURCE_PATH)"` -classpath $(JVMWorkSpace)/build/josh_api.jar $(DOC_PACKAGES) 
+	$(JDK_DIR)/bin/javadoc -locale en_US -encoding UTF-8 -charset UTF-8 -windowtitle "SMARTPS API Document" -d `cygpath -p -w "$(JAVADOC_OUTPUT_DIR)"` -sourcepath `cygpath -p -w "$(DOC_SOURCE_PATH)"` -classpath $(JVMWorkSpace)/build/josh_api.jar $(DOC_PACKAGES) 
 
 doc_clean :
 	rm -rf $(JAVADOC_OUTPUT_DIR)
@@ -788,7 +788,9 @@ DOC_PACKAGES += $(DOC_gcf_PACKAGES)
 DOC_josh-util_PACKAGES = org.joshvm.util
 DOC_PACKAGES += $(DOC_josh-util_PACKAGES)
 
-DOC_joshvm_PACKAGES = com.sun.cldc.io
+DOC_joshvm_PACKAGES = com.sun.cldc.io smartps.ipc
+
+DOC_PACKAGES += smartps.ipc
 
 help:
 	$(A)echo "Help placeholder"

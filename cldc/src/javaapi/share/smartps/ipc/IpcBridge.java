@@ -58,7 +58,7 @@ class IpcBridge extends Bridge {
 		return sourceChannel;
 	}
 
-	protected int write(org.joshvm.util.ByteBuffer buffer) {
+	protected synchronized int write(org.joshvm.util.ByteBuffer buffer) {
 		byte[] transferBuffer;
 		
 		int size = buffer.remaining();
@@ -67,12 +67,19 @@ class IpcBridge extends Bridge {
 		}
 
 		transferBuffer = new byte[size];
+		buffer.mark();
 		buffer.get(transferBuffer, 0, size);
 		
-		return write0(bridgeNativeId, transferBuffer, 0, transferBuffer.length);
+		int writtenBytes = write0(bridgeNativeId, transferBuffer, 0, transferBuffer.length);
+		if (writtenBytes != transferBuffer.length) {
+			buffer.reset();
+			buffer.position(buffer.position()+writtenBytes);
+		}
+
+		return writtenBytes;
 	}
 
-	protected int read(org.joshvm.util.ByteBuffer buffer) {
+	protected synchronized int read(org.joshvm.util.ByteBuffer buffer) {
 		byte[] transferBuffer;
 		
 		int size = buffer.remaining();

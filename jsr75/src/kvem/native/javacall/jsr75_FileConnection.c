@@ -1592,7 +1592,7 @@ Java_com_sun_cldc_io_j2me_file_DefaultFileHandler_lastModified()
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_cldc_io_j2me_file_DefaultFileHandler_openForRead()
 {
-    openForReadAndWrite(JAVACALL_FILE_O_WRONLY);
+    openForReadAndWrite(JAVACALL_FILE_O_RDONLY);
 }
 
 /*

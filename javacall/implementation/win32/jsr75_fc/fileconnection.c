@@ -87,6 +87,7 @@ extern "C" {
 #include <direct.h>
 #include <wchar.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include "javacall_time.h"
 #include "javacall_logging.h"
@@ -157,6 +158,12 @@ javacall_result javacall_fileconnection_init(void) {
                                          mount_timer_callback,
                                          &mount_timer);
     */
+    if (_mkdir("C:\\java") == -1 && errno != EEXIST) return JAVACALL_FAIL;
+	if (_mkdir("C:\\java\\user") == -1 && errno != EEXIST) return JAVACALL_FAIL;
+	if (_mkdir("C:\\java\\internal") == -1 && errno != EEXIST) return JAVACALL_FAIL;
+	if (_mkdir("C:\\java\\internal\\appdb") == -1 && errno != EEXIST) return JAVACALL_FAIL;
+	if (_mkdir("C:\\java\\internal\\appdb\\secure") == -1 && errno != EEXIST) return JAVACALL_FAIL;
+	if (_mkdir("C:\\java\\internal\\appdb\\unsecure") == -1 && errno != EEXIST) return JAVACALL_FAIL;
     return res;
 
 }

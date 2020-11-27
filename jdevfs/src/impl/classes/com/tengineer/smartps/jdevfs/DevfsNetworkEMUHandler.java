@@ -78,15 +78,15 @@ public class DevfsNetworkEMUHandler implements smartps.jdevfs.DevfsOpsHandler {
 			ioctlport = 9982;
 		} else if (devName.equals("/dev/UL_URT")) {
 			port = 9983;
-			ioctlport = 9984;
+			ioctlport = -1;
 			isPollSupported = true;
 		} else if (devName.equals("/dev/EXT1_URT")) {
 			port = 9985;
-			ioctlport = 9986;
+			ioctlport = -1;
 			isPollSupported = true;
 		} else if (devName.equals("/dev/BLE_URT")) {
 			port = 9987;
-			ioctlport = 9988;
+			ioctlport = -1;
 			isPollSupported = true;
 		} else {
 			throw new DeviceNotSupportException(devName);

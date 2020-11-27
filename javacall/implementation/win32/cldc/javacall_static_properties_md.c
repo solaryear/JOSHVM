@@ -27,11 +27,15 @@ static char* javacall_static_properties_application_md_keys[] = {
 	"smartps.jdevfs.drivers.POWER_D",
 	"smartps.jdevfs.drivers.PULSE_CH",
 	"smartps.jdevfs.drivers.UL_URT",
+	"smartps.jdevfs.drivers.EXT1_URT",
+	"smartps.jdevfs.drivers.BLE_URT",
 	NULL
 };
 
 static char* javacall_static_properties_application_md_values[] = {
 	"socket://127.0.0.1:9900",
+	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
+	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
 	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
 	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
 	"com.tengineer.smartps.jdevfs.DevfsNetworkEMUHandler",
